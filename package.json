@@ -1,0 +1,26 @@
+{
+  "name": "url-classifier-exceptions-ui",
+  "description": "UI displaying URL Classifier Exceptions stored in RemoteSettings",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prettier": "prettier --config .prettierrc '{src,scripts}/**/*.{ts,js,cjs}' --write",
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "update-types": "node scripts/updateTypesFromSchema.cjs",
+    "postinstall": "npm run update-types"
+  },
+  "author": "Emma Zuehlcke",
+  "license": "MPL-2.0",
+  "devDependencies": {
+    "dotenv": "^16.5.0",
+    "json-schema-to-typescript": "^15.0.4",
+    "prettier": "^3.5.3",
+    "typescript": "~5.8.3",
+    "vite": "^6.3.5"
+  },
+  "dependencies": {
+    "lit": "^3.3.0"
+  }
+}
