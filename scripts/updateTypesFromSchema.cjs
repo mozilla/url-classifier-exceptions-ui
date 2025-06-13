@@ -47,7 +47,7 @@ async function generateTypes() {
     const srcDir = path.join(__dirname, "..", "src");
 
     // Write the types to a file
-    const outputPath = path.join(srcDir, "types.ts");
+    const outputPath = path.join(srcDir, "url-classifier-exception-list-types.ts");
     fs.writeFileSync(outputPath, types);
     console.log(`Types generated successfully at ${outputPath}`);
   } catch (error) {

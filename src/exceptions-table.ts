@@ -1,19 +1,19 @@
 import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { URLClassifierExceptionListEntry } from "./types";
+import { ExceptionListEntry } from "./types";
 import "./badge";
 import "./bug-label";
 
 @customElement("exceptions-table")
 export class ExceptionsTable extends LitElement {
   @property({ type: Array })
-  entries: URLClassifierExceptionListEntry[] = [];
+  entries: ExceptionListEntry[] = [];
 
   @property({ attribute: false })
-  filter: (entry: URLClassifierExceptionListEntry) => boolean = () => true;
+  filter: (entry: ExceptionListEntry) => boolean = () => true;
 
   @property({ type: Array })
-  filterFields: (keyof URLClassifierExceptionListEntry)[] = [
+  filterFields: (keyof ExceptionListEntry)[] = [
     "bugIds",
     "category",
     "urlPattern",
@@ -74,7 +74,7 @@ export class ExceptionsTable extends LitElement {
     }
   `;
 
-  private isShown(field: keyof URLClassifierExceptionListEntry): string {
+  private isShown(field: keyof ExceptionListEntry): string {
     return this.filterFields.includes(field) ? "show-col" : "hidden-col";
   }
 

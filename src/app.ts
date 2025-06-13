@@ -1,6 +1,6 @@
 import { LitElement, html, css } from "lit";
 import { customElement, state } from "lit/decorators.js";
-import { URLClassifierExceptionListEntry } from "./types";
+import { ExceptionListEntry } from "./types";
 import "./exceptions-table";
 
 const RS_ENDPOINTS = {
@@ -16,7 +16,7 @@ function getRSEndpoint(): string {
   return RS_ENDPOINTS[env] || RS_ENDPOINTS.prod;
 }
 
-async function fetchRecords(rsOrigin: string): Promise<URLClassifierExceptionListEntry[]> {
+async function fetchRecords(rsOrigin: string): Promise<ExceptionListEntry[]> {
   const response = await fetch(
     `${rsOrigin}/v1/buckets/main/collections/url-classifier-exceptions/records`,
   );
@@ -30,7 +30,7 @@ async function fetchRecords(rsOrigin: string): Promise<URLClassifierExceptionLis
 @customElement("app-root")
 export class App extends LitElement {
   @state()
-  records: URLClassifierExceptionListEntry[] = [];
+  records: ExceptionListEntry[] = [];
 
   @state()
   error: string | null = null;
@@ -52,6 +52,8 @@ export class App extends LitElement {
   async init() {
     try {
       this.records = await fetchRecords(getRSEndpoint());
+      // Sort so most recently modified records are at the top.
+      this.records.sort((a, b) => b.last_modified - a.last_modified);
       this.error = null;
     } catch (error: any) {
       this.error = error?.message || "Failed to initialize";
@@ -66,7 +68,7 @@ export class App extends LitElement {
         <h3>Baseline</h3>
         <exceptions-table
           .entries=${this.records}
-          .filter=${(entry: URLClassifierExceptionListEntry) =>
+          .filter=${(entry: ExceptionListEntry) =>
             !entry.topLevelUrlPattern?.length && entry.category === "baseline"}
           .filterFields=${[
             "bugIds",
@@ -80,7 +82,7 @@ export class App extends LitElement {
         <h3>Convenience</h3>
         <exceptions-table
           .entries=${this.records}
-          .filter=${(entry: URLClassifierExceptionListEntry) =>
+          .filter=${(entry: ExceptionListEntry) =>
             !entry.topLevelUrlPattern?.length && entry.category === "convenience"}
           .filterFields=${[
             "bugIds",
@@ -95,7 +97,7 @@ export class App extends LitElement {
         <h3>Baseline</h3>
         <exceptions-table
           .entries=${this.records}
-          .filter=${(entry: URLClassifierExceptionListEntry) =>
+          .filter=${(entry: ExceptionListEntry) =>
             !!entry.topLevelUrlPattern?.length && entry.category === "baseline"}
           .filterFields=${[
             "bugIds",
@@ -110,7 +112,7 @@ export class App extends LitElement {
         <h3>Convenience</h3>
         <exceptions-table
           .entries=${this.records}
-          .filter=${(entry: URLClassifierExceptionListEntry) =>
+          .filter=${(entry: ExceptionListEntry) =>
             !!entry.topLevelUrlPattern?.length && entry.category === "convenience"}
           .filterFields=${[
             "bugIds",

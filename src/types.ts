@@ -1,60 +1,8 @@
-// This file is auto-generated. Do not edit manually.
+import { URLClassifierExceptionListEntry } from "./url-classifier-exception-list-types";
 
-/**
- * Represents an entry in the URL classifier exception list
- */
-export interface URLClassifierExceptionListEntry {
-  /**
-   * The auto-generated id of the exception list entry.
-   */
-  id?: string;
-  /**
-   * The IDs of the bugs this exception is added for.
-   *
-   * @minItems 1
-   */
-  bugIds: [string, ...string[]];
-  /**
-   * The category of the exception entry.
-   */
-  category: 'baseline' | 'convenience';
-  /**
-   * The urlPattern for the url to be loaded. See https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Match_patterns for more info.
-   */
-  urlPattern: string;
-  /**
-   * Optional Remote Settings target filter. See https://remote-settings.readthedocs.io/en/latest/target-filters.html#how
-   */
-  filter_expression?: string;
-  /**
-   * The list of url classifier features to apply this exception to.
-   */
-  classifierFeatures: (
-    | 'blockedURIs'
-    | 'cryptomining-annotation'
-    | 'cryptomining-protection'
-    | 'emailtracking-protection'
-    | 'emailtracking-data-collection'
-    | 'fingerprinting-annotation'
-    | 'fingerprinting-protection'
-    | 'malware'
-    | 'phishing'
-    | 'socialtracking-annotation'
-    | 'socialtracking-protection'
-    | 'tracking-annotation'
-    | 'tracking-protection'
-  )[];
-  /**
-   * Optional top-level url pattern to filter for this exception. If not set the exception applies to all top level sites.
-   */
-  topLevelUrlPattern?: string;
-  /**
-   * Whether this exception only applies in private browsing mode
-   */
-  isPrivateBrowsingOnly?: boolean;
-  /**
-   * Optional array of content blocking categories to filter for this exception. If not set the exception applies to all content blocking categories.
-   */
-  filterContentBlockingCategories?: ('standard' | 'strict' | 'custom')[];
-  [k: string]: unknown;
+// The RemoteSettings entry has a last_modified timestamp that is not exposed via the schema.
+// Create a type that extends the schema-generated type with the last_modified timestamp.
+// This will be the main type used throughout the app.
+export interface ExceptionListEntry extends URLClassifierExceptionListEntry {
+  last_modified: number;
 }
