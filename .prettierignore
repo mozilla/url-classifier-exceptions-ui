@@ -26,4 +26,7 @@ out/
 
 # System files
 .DS_Store
-Thumbs.db 
+Thumbs.db
+
+# Auto generated types
+src/types.ts
