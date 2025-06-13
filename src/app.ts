@@ -1,5 +1,5 @@
 import { LitElement, html, css } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
+import { customElement, state } from "lit/decorators.js";
 import { ExceptionListEntry } from "./types";
 import "./exceptions-table";
 
@@ -36,9 +36,6 @@ export class App extends LitElement {
   error: string | null = null;
 
   static styles = css`
-    .container {
-      padding: 1rem;
-    }
     h2 {
       margin-top: 2rem;
     }
@@ -134,21 +131,21 @@ export class App extends LitElement {
         ></exceptions-table>
 
         ${this.error ? html`<div class="error">${this.error}</div>` : ""}
-      </div>
 
-      <p>
-        <label for="rs-env">Remote Settings Environment:</label>
-        <select
-          @change=${(e: Event) => {
-            this.rsEnv = (e.target as HTMLSelectElement).value as RSEndpointKey;
-            this.init();
-          }}
-        >
-          <option value="prod">Prod</option>
-          <option value="stage">Stage</option>
-          <option value="dev">Dev</option>
-        </select>
-      </p>
+        <p>
+          <label for="rs-env">Remote Settings Environment:</label>
+          <select
+            @change=${(e: Event) => {
+              this.rsEnv = (e.target as HTMLSelectElement).value as RSEndpointKey;
+              this.init();
+            }}
+          >
+            <option value="prod">Prod</option>
+            <option value="stage">Stage</option>
+            <option value="dev">Dev</option>
+          </select>
+        </p>
+      </div>
     `;
   }
 }
