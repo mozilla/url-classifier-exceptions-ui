@@ -106,9 +106,9 @@ export class ExceptionsTable extends LitElement {
               <th class="${this.isShown("id")}">ID</th>
               <th class="${this.isShown("bugIds")}">Bugs</th>
               <th class="${this.isShown("category")}">Category</th>
+              <th class="${this.isShown("topLevelUrlPattern")}">Top Site</th>
               <th class="${this.isShown("urlPattern")}">Tracker</th>
               <th class="${this.isShown("classifierFeatures")}">Classifier Features</th>
-              <th class="${this.isShown("topLevelUrlPattern")}">Top Site</th>
               <th class="${this.isShown("isPrivateBrowsingOnly")}">Session Type</th>
               <th class="${this.isShown("filterContentBlockingCategories")}">ETP Levels</th>
               <th class="${this.isShown("filter_expression")}">Filter Expression</th>
@@ -133,6 +133,9 @@ export class ExceptionsTable extends LitElement {
                         >`
                       : ""}
                   </td>
+                  <td class="${this.isShown("topLevelUrlPattern")}">
+                    ${entry.topLevelUrlPattern ?? ""}
+                  </td>
                   <td class="${this.isShown("urlPattern")}">${entry.urlPattern ?? ""}</td>
                   <td class="${this.isShown("classifierFeatures")}">
                     <span class="badges">
@@ -143,9 +146,6 @@ export class ExceptionsTable extends LitElement {
                         : ""}
                     </span>
                   </td>
-                  <td class="${this.isShown("topLevelUrlPattern")}"
-                    >${entry.topLevelUrlPattern ?? ""}</td
-                  >
                   <td class="${this.isShown("isPrivateBrowsingOnly")}">
                     ${entry.isPrivateBrowsingOnly === true
                       ? html`<ui-badge type="private">Private</ui-badge>`
