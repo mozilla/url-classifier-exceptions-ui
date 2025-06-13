@@ -3,6 +3,8 @@ import { customElement, property } from "lit/decorators.js";
 import { ExceptionListEntry } from "./types";
 import "./badge";
 import "./bug-label";
+import "./exception-dialog";
+import { ExceptionDialog } from "./exception-dialog";
 
 @customElement("exceptions-table")
 export class ExceptionsTable extends LitElement {
@@ -97,6 +99,18 @@ export class ExceptionsTable extends LitElement {
     `;
   }
 
+  /**
+   * Show the detail dialog for the selected entry.
+   * @param entry The entry to show the detail for.
+   */
+  private onDetailClick(entry: ExceptionListEntry) {
+    const dialog = this.renderRoot.querySelector("exception-dialog") as ExceptionDialog;
+    if (dialog) {
+      dialog.entry = entry;
+      dialog.show();
+    }
+  }
+
   render() {
     return html`
       <div class="table-container">
@@ -112,6 +126,7 @@ export class ExceptionsTable extends LitElement {
               <th class="${this.isShown("isPrivateBrowsingOnly")}">Session Type</th>
               <th class="${this.isShown("filterContentBlockingCategories")}">ETP Levels</th>
               <th class="${this.isShown("filter_expression")}">Filter Expression</th>
+              <th>Detail</th>
             </tr>
           </thead>
           <tbody>
@@ -157,12 +172,17 @@ export class ExceptionsTable extends LitElement {
                   <td class="${this.isShown("filter_expression")}"
                     >${entry.filter_expression ?? ""}</td
                   >
+                  <td>
+                    <button @click=${() => this.onDetailClick(entry)}>{ }</button>
+                  </td>
                 </tr>
               `,
             )}
           </tbody>
         </table>
       </div>
+      <!-- Detail view for the selected entry -->
+      <exception-dialog></exception-dialog>
     `;
   }
 }

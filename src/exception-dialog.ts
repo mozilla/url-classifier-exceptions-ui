@@ -1,0 +1,109 @@
+import { LitElement, html, css } from "lit";
+import { customElement, property } from "lit/decorators.js";
+import { ExceptionListEntry } from "./types";
+
+/**
+ * Dialog for showing a raw exception entry.
+ */
+
+@customElement("exception-dialog")
+export class ExceptionDialog extends LitElement {
+  @property({ type: Object })
+  entry?: ExceptionListEntry;
+
+  static styles = css`
+    dialog {
+      padding: 1.5rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-color);
+      color: var(--text-color);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      max-width: 90vw;
+      max-height: 90vh;
+      overflow: auto;
+    }
+
+    dialog::backdrop {
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(2px);
+    }
+
+    .dialog-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .dialog-header h2 {
+      margin: 0;
+      color: var(--heading-color);
+    }
+
+    .close-button {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0.25rem;
+      color: var(--text-secondary);
+    }
+
+    .close-button:hover {
+      color: var(--text-color);
+    }
+
+    pre {
+      background: var(--bg-color);
+      padding: 1rem;
+      border-radius: 4px;
+      overflow-x: auto;
+      margin: 0;
+      font-family: monospace;
+      font-size: 0.9rem;
+      line-height: 1.4;
+      border: 1px solid var(--border-color);
+    }
+  `;
+
+  private onCloseButtonClick(e: MouseEvent) {
+    if (e.target === e.currentTarget) {
+      const dialog = this.renderRoot.querySelector("dialog");
+      if (dialog) {
+        dialog.close();
+      }
+    }
+  }
+
+  private disablePageScroll() {
+    document.body.style.overflow = "hidden";
+  }
+
+  private enablePageScroll() {
+    document.body.style.overflow = "";
+  }
+
+  show() {
+    const dialog = this.renderRoot.querySelector("dialog");
+    if (dialog) {
+      // Disable page scroll while the dialog is open.
+      this.disablePageScroll();
+      dialog.showModal();
+    }
+  }
+
+  render() {
+    const formattedJson = JSON.stringify(this.entry, null, 2);
+
+    return html`
+      <dialog @close=${this.enablePageScroll} @click=${this.onCloseButtonClick}>
+        <div class="dialog-header">
+          <h2>Exception Details</h2>
+          <button class="close-button" @click=${this.onCloseButtonClick}>&times;</button>
+        </div>
+        <pre>${formattedJson}</pre>
+      </dialog>
+    `;
+  }
+}
