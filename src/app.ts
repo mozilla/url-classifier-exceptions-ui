@@ -180,9 +180,9 @@ export class App extends LitElement {
                 this.init();
               }}
             >
-              <option value="prod">Prod</option>
-              <option value="stage">Stage</option>
-              <option value="dev">Dev</option>
+              <option value="prod" ?selected=${this.rsEnv === "prod"}>Prod</option>
+              <option value="stage" ?selected=${this.rsEnv === "stage"}>Stage</option>
+              <option value="dev" ?selected=${this.rsEnv === "dev"}>Dev</option>
             </select>
           </p>
           <p>
