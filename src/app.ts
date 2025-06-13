@@ -63,6 +63,15 @@ export class App extends LitElement {
   render() {
     return html`
       <div class="container">
+        <p>
+          There are a total of ${this.records.length} exceptions on record.
+          ${this.records.filter((e) => !e.topLevelUrlPattern?.length).length} global exceptions and
+          ${this.records.filter((e) => e.topLevelUrlPattern?.length).length} per-site exceptions.
+          ${this.records.filter((e) => e.category === "baseline").length} of them are baseline
+          exceptions and ${this.records.filter((e) => e.category === "convenience").length}
+          convenience exceptions.
+        </p>
+
         <h2>Global Exceptions</h2>
 
         <h3>Baseline</h3>
