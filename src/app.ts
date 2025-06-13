@@ -39,6 +39,9 @@ export class App extends LitElement {
     h2 {
       margin-top: 2rem;
     }
+    .error {
+      color: red;
+    }
   `;
 
   connectedCallback() {
@@ -49,6 +52,12 @@ export class App extends LitElement {
   async init() {
     try {
       this.records = await fetchRecords(RS_ENDPOINTS[this.rsEnv]);
+
+      // Spot check if the format is as expected.
+      if (this.records.length && this.records[0].bugIds == null) {
+        this.error = "Unexpected or outdated format.";
+        return;
+      }
       // Sort so most recently modified records are at the top.
       this.records.sort((a, b) => b.last_modified - a.last_modified);
       this.error = null;
@@ -57,81 +66,91 @@ export class App extends LitElement {
     }
   }
 
+  private renderMainContent() {
+    if (this.error) {
+      return html`<div class="error">Error while processing records: ${this.error}</div>`;
+    }
+
+    if (this.records.length === 0) {
+      return html`<div>No records found.</div>`;
+    }
+    return html`
+      <p>
+        There are a total of ${this.records.length} exceptions on record.
+        ${this.records.filter((e) => !e.topLevelUrlPattern?.length).length} global exceptions and
+        ${this.records.filter((e) => e.topLevelUrlPattern?.length).length} per-site exceptions.
+        ${this.records.filter((e) => e.category === "baseline").length} of them are baseline
+        exceptions and ${this.records.filter((e) => e.category === "convenience").length}
+        convenience exceptions.
+      </p>
+
+      <h2>Global Exceptions</h2>
+
+      <h3>Baseline</h3>
+      <exceptions-table
+        .entries=${this.records}
+        .filter=${(entry: ExceptionListEntry) =>
+          !entry.topLevelUrlPattern?.length && entry.category === "baseline"}
+        .filterFields=${[
+          "bugIds",
+          "urlPattern",
+          "classifierFeatures",
+          "isPrivateBrowsingOnly",
+          "filterContentBlockingCategories",
+        ]}
+      ></exceptions-table>
+
+      <h3>Convenience</h3>
+      <exceptions-table
+        .entries=${this.records}
+        .filter=${(entry: ExceptionListEntry) =>
+          !entry.topLevelUrlPattern?.length && entry.category === "convenience"}
+        .filterFields=${[
+          "bugIds",
+          "urlPattern",
+          "classifierFeatures",
+          "isPrivateBrowsingOnly",
+          "filterContentBlockingCategories",
+        ]}
+      ></exceptions-table>
+
+      <h2>Per-Site Exceptions</h2>
+      <h3>Baseline</h3>
+      <exceptions-table
+        .entries=${this.records}
+        .filter=${(entry: ExceptionListEntry) =>
+          !!entry.topLevelUrlPattern?.length && entry.category === "baseline"}
+        .filterFields=${[
+          "bugIds",
+          "urlPattern",
+          "topLevelUrlPattern",
+          "classifierFeatures",
+          "isPrivateBrowsingOnly",
+          "filterContentBlockingCategories",
+        ]}
+      ></exceptions-table>
+
+      <h3>Convenience</h3>
+      <exceptions-table
+        .entries=${this.records}
+        .filter=${(entry: ExceptionListEntry) =>
+          !!entry.topLevelUrlPattern?.length && entry.category === "convenience"}
+        .filterFields=${[
+          "bugIds",
+          "urlPattern",
+          "topLevelUrlPattern",
+          "classifierFeatures",
+          "isPrivateBrowsingOnly",
+          "filterContentBlockingCategories",
+        ]}
+      ></exceptions-table>
+    `;
+  }
+
   render() {
     return html`
       <div class="container">
-        <p>
-          There are a total of ${this.records.length} exceptions on record.
-          ${this.records.filter((e) => !e.topLevelUrlPattern?.length).length} global exceptions and
-          ${this.records.filter((e) => e.topLevelUrlPattern?.length).length} per-site exceptions.
-          ${this.records.filter((e) => e.category === "baseline").length} of them are baseline
-          exceptions and ${this.records.filter((e) => e.category === "convenience").length}
-          convenience exceptions.
-        </p>
-
-        <h2>Global Exceptions</h2>
-
-        <h3>Baseline</h3>
-        <exceptions-table
-          .entries=${this.records}
-          .filter=${(entry: ExceptionListEntry) =>
-            !entry.topLevelUrlPattern?.length && entry.category === "baseline"}
-          .filterFields=${[
-            "bugIds",
-            "urlPattern",
-            "classifierFeatures",
-            "isPrivateBrowsingOnly",
-            "filterContentBlockingCategories",
-          ]}
-        ></exceptions-table>
-
-        <h3>Convenience</h3>
-        <exceptions-table
-          .entries=${this.records}
-          .filter=${(entry: ExceptionListEntry) =>
-            !entry.topLevelUrlPattern?.length && entry.category === "convenience"}
-          .filterFields=${[
-            "bugIds",
-            "urlPattern",
-            "classifierFeatures",
-            "isPrivateBrowsingOnly",
-            "filterContentBlockingCategories",
-          ]}
-        ></exceptions-table>
-
-        <h2>Per-Site Exceptions</h2>
-        <h3>Baseline</h3>
-        <exceptions-table
-          .entries=${this.records}
-          .filter=${(entry: ExceptionListEntry) =>
-            !!entry.topLevelUrlPattern?.length && entry.category === "baseline"}
-          .filterFields=${[
-            "bugIds",
-            "urlPattern",
-            "topLevelUrlPattern",
-            "classifierFeatures",
-            "isPrivateBrowsingOnly",
-            "filterContentBlockingCategories",
-          ]}
-        ></exceptions-table>
-
-        <h3>Convenience</h3>
-        <exceptions-table
-          .entries=${this.records}
-          .filter=${(entry: ExceptionListEntry) =>
-            !!entry.topLevelUrlPattern?.length && entry.category === "convenience"}
-          .filterFields=${[
-            "bugIds",
-            "urlPattern",
-            "topLevelUrlPattern",
-            "classifierFeatures",
-            "isPrivateBrowsingOnly",
-            "filterContentBlockingCategories",
-          ]}
-        ></exceptions-table>
-
-        ${this.error ? html`<div class="error">${this.error}</div>` : ""}
-
+        ${this.renderMainContent()}
         <p>
           <label for="rs-env">Remote Settings Environment:</label>
           <select
