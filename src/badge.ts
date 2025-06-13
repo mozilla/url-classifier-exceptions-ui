@@ -5,7 +5,6 @@ import { customElement, property } from "lit/decorators.js";
 export class UIBadge extends LitElement {
   @property({ type: String }) type = "";
   @property({ type: String }) value = "";
-  @property({ type: String }) href = "";
 
   static styles = css`
     :host {
@@ -28,13 +27,6 @@ export class UIBadge extends LitElement {
       transition:
         box-shadow 0.15s,
         background 0.15s;
-    }
-    a.badge:hover,
-    a.badge:focus {
-      box-shadow: 0 0 0 2px #b3d8ff;
-      background: #f0f8ff;
-      outline: none;
-      cursor: pointer;
     }
     .badge-category-baseline {
       background: #e0f7e9;
@@ -91,15 +83,6 @@ export class UIBadge extends LitElement {
       if (this.value) {
         badgeClass += `-${this.value}`;
       }
-    }
-    if (this.href) {
-      return html`<a
-        class="${badgeClass}"
-        href="${this.href}"
-        target="_blank"
-        rel="noopener noreferrer"
-        ><slot></slot
-      ></a>`;
     }
     return html`<span class="${badgeClass}"><slot></slot></span>`;
   }
