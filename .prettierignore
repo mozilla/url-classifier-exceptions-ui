@@ -29,4 +29,4 @@ out/
 Thumbs.db
 
 # Auto generated types
-src/types.ts
+src/url-classifier-exception-list-types.ts
