@@ -1,6 +1,9 @@
 import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
 
+/**
+ * A simple badge component with different styles for different types.
+ */
 @customElement("ui-badge")
 export class UIBadge extends LitElement {
   @property({ type: String }) type = "";

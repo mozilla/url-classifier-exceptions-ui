@@ -11,10 +11,20 @@ const RS_ENDPOINTS = {
 
 type RSEndpointKey = keyof typeof RS_ENDPOINTS;
 
+/**
+ * Get the URL for the records endpoint for a given Remote Settings environment.
+ * @param rsOrigin The origin of the Remote Settings environment.
+ * @returns The URL for the records endpoint.
+ */
 function getRecordsUrl(rsOrigin: string): string {
   return `${rsOrigin}/v1/buckets/main/collections/url-classifier-exceptions/records`;
 }
 
+/**
+ * Fetch the records from the Remote Settings environment.
+ * @param rsOrigin The origin of the Remote Settings environment.
+ * @returns The records.
+ */
 async function fetchRecords(rsOrigin: string): Promise<ExceptionListEntry[]> {
   const response = await fetch(getRecordsUrl(rsOrigin));
   if (!response.ok) {
@@ -31,9 +41,11 @@ export class App extends LitElement {
   @state()
   rsEnv: RSEndpointKey = (import.meta.env.VITE_RS_ENVIRONMENT as RSEndpointKey) || "prod";
 
+  // Holds all fetched records.
   @state()
   records: ExceptionListEntry[] = [];
 
+  // Holds error message if fetching records fails.
   @state()
   error: string | null = null;
 
@@ -62,11 +74,17 @@ export class App extends LitElement {
     }
   `;
 
+  /**
+   * Run init once the element is connected to the DOM.
+   */
   connectedCallback() {
     super.connectedCallback();
     this.init();
   }
 
+  /**
+   * Fetches the records from the Remote Settings environment and sorts them.
+   */
   async init() {
     try {
       this.records = await fetchRecords(RS_ENDPOINTS[this.rsEnv]);
@@ -84,6 +102,10 @@ export class App extends LitElement {
     }
   }
 
+  /**
+   * Renders the main content of the app which is dependent on the fetched records.
+   * @returns The main content.
+   */
   private renderMainContent() {
     if (this.error) {
       return html`<div class="error">Error while processing records: ${this.error}</div>`;

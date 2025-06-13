@@ -2,9 +2,16 @@ import { LitElement, html, css } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import bugzillaIcon from "./assets/bugzilla-icon.svg";
 
+/**
+ * A component for displaying a bug label with a bugzilla icon.
+ * The bug info is asynchronously fetched from the Bugzilla REST API.
+ */
 @customElement("bug-label")
 export class BugLabel extends LitElement {
+  // ID of the bug to display. Must be a valid bugzilla bug ID.
   @property({ type: String }) bugId = "";
+
+  // Holds the bug info fetched from the Bugzilla REST API.
   @state() private bugInfo: { isOpen: boolean; summary: string } | null = null;
 
   static styles = css`
@@ -56,10 +63,16 @@ export class BugLabel extends LitElement {
     return { isOpen: info.bugs[0].is_open, summary: info.bugs[0].summary };
   }
 
+  /**
+   * Trigger fetching the bug info when the component is first updated.
+   */
   firstUpdated() {
     this.fetchBugInfo();
   }
 
+  /**
+   * Fetch the bug info from the Bugzilla REST API.
+   */
   private async fetchBugInfo() {
     if (!this.bugId) return;
 

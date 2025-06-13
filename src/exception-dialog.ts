@@ -5,7 +5,6 @@ import { ExceptionListEntry } from "./types";
 /**
  * Dialog for showing a raw exception entry.
  */
-
 @customElement("exception-dialog")
 export class ExceptionDialog extends LitElement {
   @property({ type: Object })
@@ -67,6 +66,10 @@ export class ExceptionDialog extends LitElement {
     }
   `;
 
+  /**
+   * Close the dialog when the close button is clicked.
+   * @param e The mouse event.
+   */
   private onCloseButtonClick(e: MouseEvent) {
     if (e.target === e.currentTarget) {
       const dialog = this.renderRoot.querySelector("dialog");
@@ -76,18 +79,26 @@ export class ExceptionDialog extends LitElement {
     }
   }
 
+  /**
+   * Disables page scroll while the dialog is open.
+   */
   private disablePageScroll() {
     document.body.style.overflow = "hidden";
   }
 
+  /**
+   * Enables page scroll when the dialog is closed.
+   */
   private enablePageScroll() {
     document.body.style.overflow = "";
   }
 
+  /**
+   * Shows the dialog.
+   */
   show() {
     const dialog = this.renderRoot.querySelector("dialog");
     if (dialog) {
-      // Disable page scroll while the dialog is open.
       this.disablePageScroll();
       dialog.showModal();
     }

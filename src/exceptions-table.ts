@@ -6,14 +6,20 @@ import "./bug-label";
 import "./exception-dialog";
 import { ExceptionDialog } from "./exception-dialog";
 
+/**
+ * A table component for displaying exception list entries.
+ */
 @customElement("exceptions-table")
 export class ExceptionsTable extends LitElement {
+  // Holds all records to display. Some records and fields can be hidden via the filter and filterFields properties.
   @property({ type: Array })
   entries: ExceptionListEntry[] = [];
 
+  // An optional function that filters the entries to display.
   @property({ attribute: false })
   filter: (entry: ExceptionListEntry) => boolean = () => true;
 
+  // An optional array of entry fields to display.
   @property({ type: Array })
   filterFields: (keyof ExceptionListEntry)[] = [
     "bugIds",
@@ -76,14 +82,29 @@ export class ExceptionsTable extends LitElement {
     }
   `;
 
-  private isShown(field: keyof ExceptionListEntry): string {
+  /**
+   * Determines if a field should be shown based on the filterFields property.
+   * @param field The field to check.
+   * @returns The CSS class to apply to the field.
+   */
+  private getVisibilityClass(field: keyof ExceptionListEntry): string {
     return this.filterFields.includes(field) ? "show-col" : "hidden-col";
   }
 
+  /**
+   * Capitalizes the first character of a string.
+   * @param str The string to capitalize.
+   * @returns The capitalized string.
+   */
   private capitalizeFirstChar(str: string): string {
     return str.charAt(0).toUpperCase() + str.slice(1);
   }
 
+  /**
+   * Renders a list of ETP badges.
+   * @param categories The categories to render.
+   * @returns The rendered badges.
+   */
   private renderETPBadges(categories?: ("standard" | "strict" | "custom")[]) {
     if (!Array.isArray(categories) || categories.length === 0) {
       return html`<ui-badge type="all">All</ui-badge>`;
@@ -117,15 +138,17 @@ export class ExceptionsTable extends LitElement {
         <table>
           <thead>
             <tr>
-              <th class="${this.isShown("id")}">ID</th>
-              <th class="${this.isShown("bugIds")}">Bugs</th>
-              <th class="${this.isShown("category")}">Category</th>
-              <th class="${this.isShown("topLevelUrlPattern")}">Top Site</th>
-              <th class="${this.isShown("urlPattern")}">Tracker</th>
-              <th class="${this.isShown("classifierFeatures")}">Classifier Features</th>
-              <th class="${this.isShown("isPrivateBrowsingOnly")}">Session Type</th>
-              <th class="${this.isShown("filterContentBlockingCategories")}">ETP Levels</th>
-              <th class="${this.isShown("filter_expression")}">Filter Expression</th>
+              <th class="${this.getVisibilityClass("id")}">ID</th>
+              <th class="${this.getVisibilityClass("bugIds")}">Bugs</th>
+              <th class="${this.getVisibilityClass("category")}">Category</th>
+              <th class="${this.getVisibilityClass("topLevelUrlPattern")}">Top Site</th>
+              <th class="${this.getVisibilityClass("urlPattern")}">Tracker</th>
+              <th class="${this.getVisibilityClass("classifierFeatures")}">Classifier Features</th>
+              <th class="${this.getVisibilityClass("isPrivateBrowsingOnly")}">Session Type</th>
+              <th class="${this.getVisibilityClass("filterContentBlockingCategories")}"
+                >ETP Levels</th
+              >
+              <th class="${this.getVisibilityClass("filter_expression")}">Filter Expression</th>
               <th>Detail</th>
             </tr>
           </thead>
@@ -133,26 +156,28 @@ export class ExceptionsTable extends LitElement {
             ${this.entries.filter(this.filter).map(
               (entry) => html`
                 <tr>
-                  <td class="${this.isShown("id")}">${entry.id ?? ""}</td>
-                  <td class="${this.isShown("bugIds")}">
+                  <td class="${this.getVisibilityClass("id")}">${entry.id ?? ""}</td>
+                  <td class="${this.getVisibilityClass("bugIds")}">
                     <span class="badges">
                       ${Array.isArray(entry.bugIds)
                         ? entry.bugIds.map((bugId) => html`<bug-label bugId=${bugId}></bug-label>`)
                         : ""}
                     </span>
                   </td>
-                  <td class="${this.isShown("category")}">
+                  <td class="${this.getVisibilityClass("category")}">
                     ${entry.category
                       ? html`<ui-badge type="category" value="${entry.category}"
                           >${this.capitalizeFirstChar(entry.category)}</ui-badge
                         >`
                       : ""}
                   </td>
-                  <td class="${this.isShown("topLevelUrlPattern")}">
+                  <td class="${this.getVisibilityClass("topLevelUrlPattern")}">
                     ${entry.topLevelUrlPattern ?? ""}
                   </td>
-                  <td class="${this.isShown("urlPattern")}">${entry.urlPattern ?? ""}</td>
-                  <td class="${this.isShown("classifierFeatures")}">
+                  <td class="${this.getVisibilityClass("urlPattern")}"
+                    >${entry.urlPattern ?? ""}</td
+                  >
+                  <td class="${this.getVisibilityClass("classifierFeatures")}">
                     <span class="badges">
                       ${Array.isArray(entry.classifierFeatures)
                         ? entry.classifierFeatures.map(
@@ -161,15 +186,15 @@ export class ExceptionsTable extends LitElement {
                         : ""}
                     </span>
                   </td>
-                  <td class="${this.isShown("isPrivateBrowsingOnly")}">
+                  <td class="${this.getVisibilityClass("isPrivateBrowsingOnly")}">
                     ${entry.isPrivateBrowsingOnly === true
                       ? html`<ui-badge type="private">Private</ui-badge>`
                       : html`<ui-badge type="all">All Sessions</ui-badge>`}
                   </td>
-                  <td class="${this.isShown("filterContentBlockingCategories")}">
+                  <td class="${this.getVisibilityClass("filterContentBlockingCategories")}">
                     ${this.renderETPBadges(entry.filterContentBlockingCategories)}
                   </td>
-                  <td class="${this.isShown("filter_expression")}"
+                  <td class="${this.getVisibilityClass("filter_expression")}"
                     >${entry.filter_expression ?? ""}</td
                   >
                   <td>
