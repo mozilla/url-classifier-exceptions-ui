@@ -5,7 +5,7 @@ import "./exceptions-table";
 
 const RS_ENDPOINTS = {
   prod: "https://firefox.settings.services.mozilla.com",
-  stage: "https://remote-settings.allizom.org",
+  stage: "https://firefox.settings.services.allizom.org",
   dev: "https://remote-settings-dev.allizom.org",
 } as const;
 
