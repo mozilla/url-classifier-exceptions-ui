@@ -11,10 +11,12 @@ const RS_ENDPOINTS = {
 
 type RSEndpointKey = keyof typeof RS_ENDPOINTS;
 
+function getRecordsUrl(rsOrigin: string): string {
+  return `${rsOrigin}/v1/buckets/main/collections/url-classifier-exceptions/records`;
+}
+
 async function fetchRecords(rsOrigin: string): Promise<ExceptionListEntry[]> {
-  const response = await fetch(
-    `${rsOrigin}/v1/buckets/main/collections/url-classifier-exceptions/records`,
-  );
+  const response = await fetch(getRecordsUrl(rsOrigin));
   if (!response.ok) {
     throw new Error(`Failed to fetch records: ${response.statusText}`);
   }
@@ -41,6 +43,22 @@ export class App extends LitElement {
     }
     .error {
       color: red;
+    }
+
+    a {
+      color: var(--link-color);
+    }
+
+    a:hover,
+    a:focus {
+      color: var(--link-color-hover);
+      transition: color 0.2s ease;
+    }
+
+    footer {
+      margin-top: 2rem;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
     }
   `;
 
@@ -151,19 +169,28 @@ export class App extends LitElement {
     return html`
       <div class="container">
         ${this.renderMainContent()}
-        <p>
-          <label for="rs-env">Remote Settings Environment:</label>
-          <select
-            @change=${(e: Event) => {
-              this.rsEnv = (e.target as HTMLSelectElement).value as RSEndpointKey;
-              this.init();
-            }}
-          >
-            <option value="prod">Prod</option>
-            <option value="stage">Stage</option>
-            <option value="dev">Dev</option>
-          </select>
-        </p>
+
+        <footer>
+          <p>
+            <label for="rs-env">Remote Settings Environment:</label>
+            <select
+              @change=${(e: Event) => {
+                this.rsEnv = (e.target as HTMLSelectElement).value as RSEndpointKey;
+                this.init();
+              }}
+            >
+              <option value="prod">Prod</option>
+              <option value="stage">Stage</option>
+              <option value="dev">Dev</option>
+            </select>
+          </p>
+          <p>
+            Data source:
+            <a href="${getRecordsUrl(RS_ENDPOINTS[this.rsEnv])}"
+              >${getRecordsUrl(RS_ENDPOINTS[this.rsEnv])}</a
+            >.
+          </p>
+        </footer>
       </div>
     `;
   }
