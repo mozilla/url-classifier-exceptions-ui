@@ -2,6 +2,7 @@ import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { URLClassifierExceptionListEntry } from "./types";
 import "./badge";
+import "./bug-label";
 
 @customElement("exceptions-table")
 export class ExceptionsTable extends LitElement {
@@ -103,7 +104,7 @@ export class ExceptionsTable extends LitElement {
           <thead>
             <tr>
               <th class="${this.isShown("id")}">ID</th>
-              <th class="${this.isShown("bugIds")}">Bug IDs</th>
+              <th class="${this.isShown("bugIds")}">Bugs</th>
               <th class="${this.isShown("category")}">Category</th>
               <th class="${this.isShown("urlPattern")}">Tracker</th>
               <th class="${this.isShown("classifierFeatures")}">Classifier Features</th>
@@ -121,14 +122,7 @@ export class ExceptionsTable extends LitElement {
                   <td class="${this.isShown("bugIds")}">
                     <span class="badges">
                       ${Array.isArray(entry.bugIds)
-                        ? entry.bugIds.map(
-                            (bugId) =>
-                              html`<ui-badge
-                                type="bug"
-                                href="https://bugzilla.mozilla.org/show_bug.cgi?id=${bugId}"
-                                >${bugId}</ui-badge
-                              >`,
-                          )
+                        ? entry.bugIds.map((bugId) => html`<bug-label bugId=${bugId}></bug-label>`)
                         : ""}
                     </span>
                   </td>
