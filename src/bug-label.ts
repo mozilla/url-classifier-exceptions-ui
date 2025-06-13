@@ -6,7 +6,6 @@ import bugzillaIcon from "./assets/bugzilla-icon.svg";
 export class BugLabel extends LitElement {
   @property({ type: String }) bugId = "";
   @state() private bugInfo: { isOpen: boolean; summary: string } | null = null;
-  @state() private loading = true;
 
   static styles = css`
     :host {
@@ -65,13 +64,10 @@ export class BugLabel extends LitElement {
     if (!this.bugId) return;
 
     try {
-      this.loading = true;
       this.bugInfo = await this.bugzillaGetBugInfo(this.bugId);
     } catch (err) {
       console.error(`Failed to fetch bug info for bug ${this.bugId}:`, err);
       this.bugInfo = { isOpen: false, summary: "Error fetching bug info" };
-    } finally {
-      this.loading = false;
     }
   }
 
