@@ -174,6 +174,7 @@ export class App extends LitElement {
           <p>
             <label for="rs-env">Remote Settings Environment:</label>
             <select
+              id="rs-env"
               @change=${(e: Event) => {
                 this.rsEnv = (e.target as HTMLSelectElement).value as RSEndpointKey;
                 this.init();
