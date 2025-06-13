@@ -65,9 +65,15 @@ export class BugLabel extends LitElement {
 
     try {
       this.bugInfo = await this.bugzillaGetBugInfo(this.bugId);
+      if (this.bugInfo?.summary) {
+        this.bugInfo.summary = `Bug ${this.bugId}: ${this.bugInfo.summary}`;
+      }
     } catch (err) {
       console.error(`Failed to fetch bug info for bug ${this.bugId}:`, err);
-      this.bugInfo = { isOpen: false, summary: "Error fetching bug info" };
+      this.bugInfo = {
+        isOpen: false,
+        summary: `Error fetching bug info for bug ${this.bugId}`,
+      };
     }
   }
 
