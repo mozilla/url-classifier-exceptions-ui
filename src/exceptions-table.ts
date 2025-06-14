@@ -159,7 +159,7 @@ export class ExceptionsTable extends LitElement {
     }
   }
 
-  render() {
+  private renderTable() {
     return html`
       <div class="table-container">
         <table>
@@ -218,5 +218,12 @@ export class ExceptionsTable extends LitElement {
       <!-- Detail view for the selected entry -->
       <exception-dialog></exception-dialog>
     `;
+  }
+
+  render() {
+    if (this.filteredEntries.length === 0) {
+      return html`<div>No entries found.</div>`;
+    }
+    return this.renderTable();
   }
 }
