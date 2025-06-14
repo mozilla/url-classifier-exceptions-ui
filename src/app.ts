@@ -10,6 +10,10 @@ import "./github-corner";
 
 const GITHUB_URL = "https://github.com/Trikolon/url-classifier-exceptions-ui";
 
+// Query parameter which can be used to override the RS environment.
+const QUERY_PARAM_RS_ENV = "rs_env";
+
+// The available Remote Settings endpoints.
 const RS_ENDPOINTS = {
   prod: "https://firefox.settings.services.mozilla.com",
   stage: "https://firefox.settings.services.allizom.org",
@@ -17,6 +21,21 @@ const RS_ENDPOINTS = {
 } as const;
 
 type RSEndpointKey = keyof typeof RS_ENDPOINTS;
+
+/**
+ * Get the RS environment from URL parameters, falling back to the defaults if
+ * not specified.
+ * @returns The RS environment key
+ */
+function getRsEnv(): RSEndpointKey {
+  const params = new URLSearchParams(window.location.search);
+  const env = params.get(QUERY_PARAM_RS_ENV);
+  if (env && Object.keys(RS_ENDPOINTS).includes(env)) {
+    return env as RSEndpointKey;
+  }
+  // Fall back to build env configuration or if env is not set, the default of "prod".
+  return (import.meta.env.VITE_RS_ENVIRONMENT as RSEndpointKey) || "prod";
+}
 
 /**
  * Get the URL for the records endpoint for a given Remote Settings environment.
@@ -48,9 +67,10 @@ async function fetchRecords(rsOrigin: string): Promise<ExceptionListEntry[]> {
 @customElement("app-root")
 export class App extends LitElement {
   // The Remote Settings environment to use. The default is configured via env
-  // at build time. The user can change this via a dropdown.
+  // at build time. The user can change this via a dropdown. The user can also
+  // override the environment via a query parameter.
   @state()
-  rsEnv: RSEndpointKey = (import.meta.env.VITE_RS_ENVIRONMENT as RSEndpointKey) || "prod";
+  rsEnv: RSEndpointKey = getRsEnv();
 
   // Holds all fetched records.
   @state()
@@ -210,7 +230,16 @@ export class App extends LitElement {
             <select
               id="rs-env"
               @change=${(e: Event) => {
-                this.rsEnv = (e.target as HTMLSelectElement).value as RSEndpointKey;
+                const newEnv = (e.target as HTMLSelectElement).value as RSEndpointKey;
+                this.rsEnv = newEnv;
+
+                // When the env changes reflect the update in the URL.
+                // Update URL parameter without reloading the page
+                const url = new URL(window.location.href);
+                url.searchParams.set(QUERY_PARAM_RS_ENV, newEnv);
+                window.history.pushState({}, "", url);
+
+                // Fetch the records again.
                 this.init();
               }}
             >
