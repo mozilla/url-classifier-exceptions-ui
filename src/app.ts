@@ -107,6 +107,14 @@ export class App extends LitElement {
   }
 
   /**
+   * Get the number of unique bugs that are associated with the exceptions list
+   * @returns The number of unique bugs.
+   */
+  get uniqueBugCount(): number {
+    return new Set(this.records.flatMap((record) => record.bugIds || [])).size;
+  }
+
+  /**
    * Renders the main content of the app which is dependent on the fetched records.
    * @returns The main content.
    */
@@ -126,6 +134,10 @@ export class App extends LitElement {
         ${this.records.filter((e) => e.category === "baseline").length} of them are baseline
         exceptions and ${this.records.filter((e) => e.category === "convenience").length}
         convenience exceptions.
+      </p>
+      <p>
+        Overall the exceptions resolve ${this.uniqueBugCount} known bugs. Note that global
+        exceptions resolve a lot of untracked site breakage, i.e. breakage we don't have a bug for.
       </p>
 
       <h2>Global Exceptions</h2>
