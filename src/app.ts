@@ -6,6 +6,9 @@ import { LitElement, html, css } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import { ExceptionListEntry } from "./types";
 import "./exceptions-table";
+import "./github-corner";
+
+const GITHUB_URL = "https://github.com/Trikolon/url-classifier-exceptions-ui";
 
 const RS_ENDPOINTS = {
   prod: "https://firefox.settings.services.mozilla.com",
@@ -223,6 +226,8 @@ export class App extends LitElement {
             >.
           </p>
         </footer>
+        <!-- Show a link to the repository in the top right corner -->
+        <github-corner repoUrl=${GITHUB_URL}></github-corner>
       </div>
     `;
   }
