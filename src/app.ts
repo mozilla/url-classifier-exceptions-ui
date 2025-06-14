@@ -132,7 +132,7 @@ export class App extends LitElement {
     }
     return html`
       <p>
-        There are a total of ${this.records.length} exceptions on record.
+        There are currently a total of ${this.records.length} exceptions on record.
         ${this.records.filter((e) => !e.topLevelUrlPattern?.length).length} global exceptions and
         ${this.records.filter((e) => e.topLevelUrlPattern?.length).length} per-site exceptions.
         ${this.records.filter((e) => e.category === "baseline").length} of them are baseline
