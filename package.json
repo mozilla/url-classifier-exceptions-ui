@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "prettier": "prettier --config .prettierrc '{src,scripts}/**/*.{ts,js,cjs}' --write",
+    "lint": "prettier --config .prettierrc '{src,scripts}/**/*.{ts,js,cjs}' --check",
+    "lint-fix": "prettier --config .prettierrc '{src,scripts}/**/*.{ts,js,cjs}' --write",
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
