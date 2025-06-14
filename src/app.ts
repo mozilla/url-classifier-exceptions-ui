@@ -21,6 +21,10 @@ type RSEndpointKey = keyof typeof RS_ENDPOINTS;
  * @returns The URL for the records endpoint.
  */
 function getRecordsUrl(rsOrigin: string): string {
+  // Allow ENV to override the URL for testing.
+  if (import.meta.env.VITE_RS_RECORDS_URL) {
+    return import.meta.env.VITE_RS_RECORDS_URL;
+  }
   return `${rsOrigin}/v1/buckets/main/collections/url-classifier-exceptions/records`;
 }
 
