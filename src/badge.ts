@@ -45,41 +45,6 @@ export class UIBadge extends LitElement {
       color: #a05a00;
       border-color: #ffe0b3;
     }
-    .badge-private {
-      background: #e0e7ff;
-      color: #2a3fa0;
-      border-color: #b3c2ff;
-    }
-    .badge-all {
-      background: #e7f0e0;
-      color: #3a6e1b;
-      border-color: #c7e6b6;
-    }
-    .badge-etp-standard {
-      background: #e0f0ff;
-      color: #005a8c;
-      border-color: #b3d8ff;
-    }
-    .badge-etp-strict {
-      background: #ffe0e0;
-      color: #a01b1b;
-      border-color: #ffb3b3;
-    }
-    .badge-etp-custom {
-      background: #f3e0ff;
-      color: #6e1ba0;
-      border-color: #dab3ff;
-    }
-    .badge-feature {
-      background: #f0f4fa;
-      color: #234;
-      border-color: #d0d8e6;
-    }
-    .badge-bug {
-      background: #f5e0ff;
-      color: #7a1ba0;
-      border-color: #e6b3ff;
-    }
   `;
 
   render() {

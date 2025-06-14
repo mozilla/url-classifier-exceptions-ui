@@ -132,61 +132,35 @@ export class App extends LitElement {
 
       <h3>Baseline</h3>
       <exceptions-table
+        id="global-baseline"
         .entries=${this.records}
         .filter=${(entry: ExceptionListEntry) =>
           !entry.topLevelUrlPattern?.length && entry.category === "baseline"}
-        .filterFields=${[
-          "bugIds",
-          "urlPattern",
-          "classifierFeatures",
-          "isPrivateBrowsingOnly",
-          "filterContentBlockingCategories",
-        ]}
       ></exceptions-table>
 
       <h3>Convenience</h3>
       <exceptions-table
+        id="global-convenience"
         .entries=${this.records}
         .filter=${(entry: ExceptionListEntry) =>
           !entry.topLevelUrlPattern?.length && entry.category === "convenience"}
-        .filterFields=${[
-          "bugIds",
-          "urlPattern",
-          "classifierFeatures",
-          "isPrivateBrowsingOnly",
-          "filterContentBlockingCategories",
-        ]}
       ></exceptions-table>
 
       <h2>Per-Site Exceptions</h2>
       <h3>Baseline</h3>
       <exceptions-table
+        id="per-site-baseline"
         .entries=${this.records}
         .filter=${(entry: ExceptionListEntry) =>
           !!entry.topLevelUrlPattern?.length && entry.category === "baseline"}
-        .filterFields=${[
-          "bugIds",
-          "urlPattern",
-          "topLevelUrlPattern",
-          "classifierFeatures",
-          "isPrivateBrowsingOnly",
-          "filterContentBlockingCategories",
-        ]}
       ></exceptions-table>
 
       <h3>Convenience</h3>
       <exceptions-table
+        id="per-site-convenience"
         .entries=${this.records}
         .filter=${(entry: ExceptionListEntry) =>
           !!entry.topLevelUrlPattern?.length && entry.category === "convenience"}
-        .filterFields=${[
-          "bugIds",
-          "urlPattern",
-          "topLevelUrlPattern",
-          "classifierFeatures",
-          "isPrivateBrowsingOnly",
-          "filterContentBlockingCategories",
-        ]}
       ></exceptions-table>
     `;
   }
