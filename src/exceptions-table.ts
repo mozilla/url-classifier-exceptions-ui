@@ -136,7 +136,10 @@ export class ExceptionsTable extends LitElement {
       <span class="badges">
         ${this.renderETPBadges(entry)}
         ${entry.filter_expression
-          ? html`<ui-badge @click=${() => this.onDetailClick(entry)} type="filter"
+          ? html`<ui-badge
+              title="${entry.filter_expression}"
+              @click=${() => this.onDetailClick(entry)}
+              type="filter"
               >RS Filter</ui-badge
             >`
           : ""}
