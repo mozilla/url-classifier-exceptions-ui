@@ -159,6 +159,43 @@ export class ExceptionsTable extends LitElement {
     }
   }
 
+  /**
+   * Get the host from a URL pattern using regex.
+   * @param urlPattern The URL pattern to get the host from.
+   * @returns The host from the URL pattern.
+   */
+  private getHostFromUrlPattern(urlPattern: string): string | null {
+    const match = urlPattern.match(/:\/\/(?:\*\.)?([^/*]+)/);
+
+    if (match?.length && match.length >= 2) {
+      return match[1];
+    }
+
+    console.warn("Failed to parse host from URL pattern", urlPattern);
+    return null;
+  }
+
+  /**
+   * Renders the URL pattern for an entry.
+   * For simplicity we show only the host part.
+   * The full pattern is shown on hover.
+   * @param urlPattern The URL pattern to render.
+   * @returns The rendered URL pattern.
+   */
+  private renderUrlPattern(urlPattern?: string) {
+    if (!urlPattern) {
+      return html`-`;
+    }
+    let host = this.getHostFromUrlPattern(urlPattern);
+
+    // If we can't parse the host, return the original URL pattern.
+    if (host == null) {
+      return urlPattern;
+    }
+
+    return html`<span title=${urlPattern}>${host}</span>`;
+  }
+
   private renderTable() {
     return html`
       <div class="table-container">
@@ -193,9 +230,9 @@ export class ExceptionsTable extends LitElement {
                       : ""}
                   </td>
                   <td class="${this.hasGlobalRules ? "" : "hidden-col"}">
-                    ${entry.topLevelUrlPattern ?? ""}
+                    ${this.renderUrlPattern(entry.topLevelUrlPattern)}
                   </td>
-                  <td>${entry.urlPattern ?? ""}</td>
+                  <td>${this.renderUrlPattern(entry.urlPattern)}</td>
                   <td>
                     <span class="badges">
                       ${Array.isArray(entry.classifierFeatures)
