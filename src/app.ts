@@ -84,9 +84,46 @@ export class App extends LitElement {
   error: string | null = null;
 
   static styles = css`
+    /* Sticky headings. */
     h2 {
       margin-top: 2rem;
+      position: sticky;
+      top: 0;
+      background: var(--bg-color);
+      margin: 0;
+      padding: 1rem 0;
     }
+
+    /* First h2 gets z-index 10 */
+    h2:nth-of-type(1) {
+      z-index: 10;
+    }
+
+    /* Second h2 gets z-index 30 */
+    h2:nth-of-type(2) {
+      z-index: 30;
+    }
+
+    h3 {
+      position: sticky;
+      top: 3rem;
+      background: var(--bg-color);
+      margin: 0;
+      padding: 0.5rem 0;
+    }
+
+    /* First two h3s get z-index 20 */
+    h3:nth-of-type(1),
+    h3:nth-of-type(2) {
+      z-index: 20;
+    }
+
+    /* Last two h3s get z-index 40 */
+    h3:nth-of-type(3),
+    h3:nth-of-type(4) {
+      z-index: 40;
+    }
+
     .error {
       color: red;
     }
