@@ -206,7 +206,6 @@ export class ExceptionsTable extends LitElement {
           <thead>
             <tr>
               <th>Bugs</th>
-              <th>Category</th>
               <th class="${this.hasGlobalRules ? "" : "hidden-col"}">Top Site</th>
               <th>Tracker</th>
               <th>Classifier Features</th>
@@ -224,13 +223,6 @@ export class ExceptionsTable extends LitElement {
                         ? entry.bugIds.map((bugId) => html`<bug-label bugId=${bugId}></bug-label>`)
                         : ""}
                     </span>
-                  </td>
-                  <td>
-                    ${entry.category
-                      ? html`<ui-badge type="category" value="${entry.category}"
-                          >${this.capitalizeFirstChar(entry.category)}</ui-badge
-                        >`
-                      : ""}
                   </td>
                   <td class="${this.hasGlobalRules ? "" : "hidden-col"}">
                     ${this.renderUrlPattern(entry.topLevelUrlPattern)}
