@@ -76,6 +76,9 @@ export class App extends LitElement {
   @state()
   records: ExceptionListEntry[] = [];
 
+  @state()
+  loading: boolean = true;
+
   // Holds error message if fetching records fails.
   @state()
   error: string | null = null;
@@ -118,6 +121,7 @@ export class App extends LitElement {
    */
   async init() {
     try {
+      this.loading = true;
       this.records = await fetchRecords(RS_ENDPOINTS[this.rsEnv]);
 
       // Spot check if the format is as expected.
@@ -130,6 +134,8 @@ export class App extends LitElement {
       this.error = null;
     } catch (error: any) {
       this.error = error?.message || "Failed to initialize";
+    } finally {
+      this.loading = false;
     }
   }
 
@@ -148,6 +154,10 @@ export class App extends LitElement {
   private renderMainContent() {
     if (this.error) {
       return html`<div class="error">Error while processing records: ${this.error}</div>`;
+    }
+
+    if (this.loading) {
+      return html`<div>Loading...</div>`;
     }
 
     if (this.records.length === 0) {
