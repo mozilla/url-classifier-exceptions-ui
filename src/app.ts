@@ -126,8 +126,7 @@ export class App extends LitElement {
 
       // Spot check if the format is as expected.
       if (this.records.length && this.records[0].bugIds == null) {
-        this.error = "Unexpected or outdated format.";
-        return;
+        throw new Error("Unexpected or outdated format.");
       }
       // Sort so most recently modified records are at the top.
       this.records.sort((a, b) => b.last_modified - a.last_modified);
