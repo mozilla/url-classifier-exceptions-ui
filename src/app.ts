@@ -4,7 +4,7 @@
 
 import { LitElement, html, css } from "lit";
 import { customElement, state } from "lit/decorators.js";
-import { ExceptionListEntry } from "./types";
+import { ExceptionListEntry, BugMetaMap, BugMeta } from "./types";
 import "./exceptions-table";
 import "./github-corner";
 
@@ -64,6 +64,46 @@ async function fetchRecords(rsOrigin: string): Promise<ExceptionListEntry[]> {
   return json.data;
 }
 
+/**
+ * Fetch the metadata for a set of bug IDs from Bugzilla.
+ * @param bugIds The set of bug IDs to fetch metadata for.
+ * @returns A map of bug IDs to their metadata.
+ */
+async function fetchBugMetadata(bugIds: Set<string>): Promise<BugMetaMap> {
+  if (bugIds.size === 0) {
+    return {};
+  }
+
+  let url = new URL("https://bugzilla.mozilla.org/rest/bug");
+  url.searchParams.set("id", Array.from(bugIds).join(","));
+  url.searchParams.set("include_fields", "id,is_open,summary");
+
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch bug metadata: ${response.statusText}`);
+  }
+  const json = await response.json();
+
+  // Validate the response object.
+  if (!json.bugs?.length) {
+    throw new Error("Unexpected or outdated format.");
+  }
+
+  // Convert API response which is an array of bugs into a map of bug IDs to
+  // their metadata.
+  let bugMetaMap: BugMetaMap = {};
+
+  for (let bug of json.bugs) {
+    bugMetaMap[bug.id] = {
+      id: bug.id,
+      isOpen: bug.is_open,
+      summary: bug.summary,
+    };
+  }
+
+  return bugMetaMap;
+}
+
 @customElement("app-root")
 export class App extends LitElement {
   // The Remote Settings environment to use. The default is configured via env
@@ -75,6 +115,11 @@ export class App extends LitElement {
   // Holds all fetched records.
   @state()
   records: ExceptionListEntry[] = [];
+
+  // Holds the metadata for all bugs that are associated with the exceptions
+  // list.
+  @state()
+  bugMeta: BugMetaMap = {};
 
   @state()
   loading: boolean = true;
@@ -165,8 +210,15 @@ export class App extends LitElement {
       if (this.records.length && this.records[0].bugIds == null) {
         throw new Error("Unexpected or outdated format.");
       }
+
       // Sort so most recently modified records are at the top.
       this.records.sort((a, b) => b.last_modified - a.last_modified);
+
+      // Fetch the metadata for all bugs that are associated with the exceptions list.
+      this.bugMeta = await fetchBugMetadata(
+        new Set(this.records.flatMap((record) => record.bugIds || [])),
+      );
+
       this.error = null;
     } catch (error: any) {
       this.error = error?.message || "Failed to initialize";
@@ -219,6 +271,7 @@ export class App extends LitElement {
       <exceptions-table
         id="global-baseline"
         .entries=${this.records}
+        .bugMeta=${this.bugMeta}
         .filter=${(entry: ExceptionListEntry) =>
           !entry.topLevelUrlPattern?.length && entry.category === "baseline"}
       ></exceptions-table>
@@ -227,6 +280,7 @@ export class App extends LitElement {
       <exceptions-table
         id="global-convenience"
         .entries=${this.records}
+        .bugMeta=${this.bugMeta}
         .filter=${(entry: ExceptionListEntry) =>
           !entry.topLevelUrlPattern?.length && entry.category === "convenience"}
       ></exceptions-table>
@@ -236,6 +290,7 @@ export class App extends LitElement {
       <exceptions-table
         id="per-site-baseline"
         .entries=${this.records}
+        .bugMeta=${this.bugMeta}
         .filter=${(entry: ExceptionListEntry) =>
           !!entry.topLevelUrlPattern?.length && entry.category === "baseline"}
       ></exceptions-table>
@@ -244,6 +299,7 @@ export class App extends LitElement {
       <exceptions-table
         id="per-site-convenience"
         .entries=${this.records}
+        .bugMeta=${this.bugMeta}
         .filter=${(entry: ExceptionListEntry) =>
           !!entry.topLevelUrlPattern?.length && entry.category === "convenience"}
       ></exceptions-table>

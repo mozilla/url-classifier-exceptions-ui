@@ -4,6 +4,18 @@
 
 import { URLClassifierExceptionListEntry } from "./url-classifier-exception-list-types";
 
+// Metadata about a bug from Bugzilla.
+export interface BugMeta {
+  id: string;
+  isOpen: boolean;
+  summary: string;
+}
+
+// A map of bug IDs to their metadata.
+export interface BugMetaMap {
+  [bugId: string]: BugMeta;
+}
+
 // The RemoteSettings entry has a last_modified timestamp that is not exposed via the schema.
 // Create a type that extends the schema-generated type with the last_modified timestamp.
 // This will be the main type used throughout the app.

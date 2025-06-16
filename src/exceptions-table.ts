@@ -4,7 +4,7 @@
 
 import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { ExceptionListEntry } from "./types";
+import { BugMetaMap, ExceptionListEntry } from "./types";
 import "./badge";
 import "./bug-label";
 import "./exception-dialog";
@@ -18,6 +18,10 @@ export class ExceptionsTable extends LitElement {
   // Holds all records to display. Some records and fields can be hidden via the filter and filterFields properties.
   @property({ type: Array })
   entries: ExceptionListEntry[] = [];
+
+  // Holds all bug metadata to display.
+  @property({ type: Object })
+  bugMeta: BugMetaMap = {};
 
   // An optional function that filters the entries to display.
   @property({ attribute: false })
@@ -199,6 +203,22 @@ export class ExceptionsTable extends LitElement {
     return html`<span title=${urlPattern}>${host}</span>`;
   }
 
+  /**
+   * Renders a list of bug labels for an entry.
+   * @param entry The entry to render the bug labels for.
+   * @returns The rendered bug labels.
+   */
+  private renderBugLabels(entry: ExceptionListEntry) {
+    if (!Array.isArray(entry.bugIds) || entry.bugIds.length === 0) {
+      return html``;
+    }
+    return html`<span class="badges"
+      >${entry.bugIds.map(
+        (bugId) => html`<bug-label .bugMeta=${this.bugMeta[bugId]}></bug-label>`,
+      )}</span
+    >`;
+  }
+
   private renderTable() {
     return html`
       <div class="table-container">
@@ -218,11 +238,7 @@ export class ExceptionsTable extends LitElement {
               (entry) => html`
                 <tr>
                   <td>
-                    <span class="badges">
-                      ${Array.isArray(entry.bugIds)
-                        ? entry.bugIds.map((bugId) => html`<bug-label bugId=${bugId}></bug-label>`)
-                        : ""}
-                    </span>
+                    <span class="badges"> ${this.renderBugLabels(entry)} </span>
                   </td>
                   <td class="${this.hasGlobalRules ? "" : "hidden-col"}">
                     ${this.renderUrlPattern(entry.topLevelUrlPattern)}
