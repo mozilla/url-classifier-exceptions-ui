@@ -227,7 +227,7 @@ export class ExceptionsTable extends LitElement {
             <tr>
               <th>Bugs</th>
               <th class="${this.hasGlobalRules ? "" : "hidden-col"}">Top Site</th>
-              <th>Tracker</th>
+              <th>Resource</th>
               <th>Classifier Features</th>
               <th>Filters</th>
               <th>Detail</th>
