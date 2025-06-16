@@ -51,7 +51,7 @@ export class BugLabel extends LitElement {
         href="https://bugzilla.mozilla.org/show_bug.cgi?id=${this.bugMeta.id}"
         target="_blank"
         rel="noopener noreferrer"
-        title=${this.bugMeta.summary}
+        title=${`Bug ${this.bugMeta.id}: ${this.bugMeta.summary}`}
       >
         <img
           class="bug-icon ${!this.bugMeta.isOpen ? "closed" : ""}"
