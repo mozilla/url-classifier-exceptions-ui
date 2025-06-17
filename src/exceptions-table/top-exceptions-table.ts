@@ -13,7 +13,7 @@ import tableStyles from "./table-styles.css.ts";
 import { getHostFromUrlPattern, renderUrlPattern } from "./utils.ts";
 
 interface TopResource {
-  urlPattern: string;
+  host: string;
   topLevelSites: Set<string>;
   bugIds: Set<string>;
   entries: Set<ExceptionListEntry>;
@@ -70,7 +70,7 @@ export class TopExceptionsTable extends LitElement {
       let topResource = topResources.get(resourceHost);
       if (!topResource) {
         topResource = {
-          urlPattern: resourceHost,
+          host: resourceHost,
           topLevelSites: new Set(),
           bugIds: new Set(),
           entries: new Set(),
@@ -111,7 +111,7 @@ export class TopExceptionsTable extends LitElement {
               (topResource) => html`
                 <tr>
                   <td class="compact-col">${topResource.topLevelSites.size}</td>
-                  <td>${renderUrlPattern(topResource.urlPattern)}</td>
+                  <td>${topResource.host}</td>
                   <td>
                     <button
                       @click=${() => this.onDetailClick(Array.from(topResource.entries.values()))}
