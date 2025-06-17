@@ -244,55 +244,68 @@ export class App extends LitElement {
         exceptions resolve a lot of untracked site breakage, i.e. breakage we don't have a bug for.
       </p>
 
-      <h2 style="z-index: 10;">Global Exceptions</h2>
+      <section style="z-index: 10;">
+        <h2 style="z-index: 20;">Global Exceptions</h2>
+        <p>
+          Global exceptions are applied for sub-resources across all top level sites. They are
+          applied when blocking a resource breaks many sites.
+        </p>
 
-      <h3 style="z-index: 20;">Baseline</h3>
-      <exceptions-table
-        id="global-baseline"
-        .entries=${this.records}
-        .bugMeta=${this.bugMeta}
-        .filter=${(entry: ExceptionListEntry) =>
-          !entry.topLevelUrlPattern?.length && entry.category === "baseline"}
-      ></exceptions-table>
+        <h3 style="z-index: 30;">Baseline</h3>
+        <exceptions-table
+          id="global-baseline"
+          .entries=${this.records}
+          .bugMeta=${this.bugMeta}
+          .filter=${(entry: ExceptionListEntry) =>
+            !entry.topLevelUrlPattern?.length && entry.category === "baseline"}
+        ></exceptions-table>
 
-      <h3 style="z-index: 30;">Convenience</h3>
-      <exceptions-table
-        id="global-convenience"
-        .entries=${this.records}
-        .bugMeta=${this.bugMeta}
-        .filter=${(entry: ExceptionListEntry) =>
-          !entry.topLevelUrlPattern?.length && entry.category === "convenience"}
-      ></exceptions-table>
+        <h3 style="z-index: 40;">Convenience</h3>
+        <exceptions-table
+          id="global-convenience"
+          .entries=${this.records}
+          .bugMeta=${this.bugMeta}
+          .filter=${(entry: ExceptionListEntry) =>
+            !entry.topLevelUrlPattern?.length && entry.category === "convenience"}
+        ></exceptions-table>
+      </section>
 
-      <h2 style="z-index: 40;">Per-Site Exceptions</h2>
-      <h3 style="z-index: 50;">Baseline</h3>
-      <exceptions-table
-        id="per-site-baseline"
-        .entries=${this.records}
-        .bugMeta=${this.bugMeta}
-        .filter=${(entry: ExceptionListEntry) =>
-          !!entry.topLevelUrlPattern?.length && entry.category === "baseline"}
-      ></exceptions-table>
+      <section style="z-index: 50;">
+        <h2 style="z-index: 60;">Per-Site Exceptions</h2>
+        <p>
+          Per-site exceptions are applied for sub-resources on a specific top level site. They are
+          applied for site specific breakage.
+        </p>
 
-      <h3 style="z-index: 60;">Convenience</h3>
-      <exceptions-table
-        id="per-site-convenience"
-        .entries=${this.records}
-        .bugMeta=${this.bugMeta}
-        .filter=${(entry: ExceptionListEntry) =>
-          !!entry.topLevelUrlPattern?.length && entry.category === "convenience"}
-      ></exceptions-table>
+        <h3 style="z-index: 70;">Baseline</h3>
+        <exceptions-table
+          id="per-site-baseline"
+          .entries=${this.records}
+          .bugMeta=${this.bugMeta}
+          .filter=${(entry: ExceptionListEntry) =>
+            !!entry.topLevelUrlPattern?.length && entry.category === "baseline"}
+        ></exceptions-table>
 
-      <h3 style="z-index: 70;">Top Resources</h3>
-      <p>
-        This table shows the top resources that are allow-listed via site-specific exception list
-        entries. If a resource is allow-listed under many top level sites, it can be an indicator
-        that it should be added to the global exceptions list.
-      </p>
-      <top-exceptions-table
-        .entries=${this.records}
-        .bugMeta=${this.bugMeta}
-      ></top-exceptions-table>
+        <h3 style="z-index: 80;">Convenience</h3>
+        <exceptions-table
+          id="per-site-convenience"
+          .entries=${this.records}
+          .bugMeta=${this.bugMeta}
+          .filter=${(entry: ExceptionListEntry) =>
+            !!entry.topLevelUrlPattern?.length && entry.category === "convenience"}
+        ></exceptions-table>
+
+        <h3 style="z-index: 90;">Top Resources</h3>
+        <p>
+          This table shows the top resources that are allow-listed via site-specific exception list
+          entries. If a resource is allow-listed under many top level sites, it can be an indicator
+          that it should be added to the global exceptions list.
+        </p>
+        <top-exceptions-table
+          .entries=${this.records}
+          .bugMeta=${this.bugMeta}
+        ></top-exceptions-table>
+      </section>
     `;
   }
 
