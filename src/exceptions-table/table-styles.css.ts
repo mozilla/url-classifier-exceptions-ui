@@ -59,4 +59,9 @@ export default css`
     flex-wrap: wrap;
     gap: 0.3em;
   }
+
+  .compact-col {
+    width: 1%;
+    white-space: nowrap;
+  }
 `;

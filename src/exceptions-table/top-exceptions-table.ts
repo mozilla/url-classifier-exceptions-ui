@@ -101,7 +101,7 @@ export class TopExceptionsTable extends LitElement {
         <table>
           <thead>
             <tr>
-              <th># Sites</th>
+              <th class="compact-col"># Sites</th>
               <th>Resource</th>
               <th>Detail</th>
             </tr>
@@ -110,7 +110,7 @@ export class TopExceptionsTable extends LitElement {
             ${this.topResources.map(
               (topResource) => html`
                 <tr>
-                  <td>${topResource.topLevelSites.size}</td>
+                  <td class="compact-col">${topResource.topLevelSites.size}</td>
                   <td>${renderUrlPattern(topResource.urlPattern)}</td>
                   <td>
                     <button
