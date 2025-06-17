@@ -13,6 +13,7 @@ export default css`
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     background: var(--bg-color, #fff);
   }
+
   table {
     width: 100%;
     border-collapse: separate;
@@ -20,6 +21,7 @@ export default css`
     min-width: 800px;
     background: inherit;
   }
+
   th,
   td {
     padding: 0.6em 1em;
@@ -28,6 +30,7 @@ export default css`
     vertical-align: middle;
     font-size: 0.97em;
   }
+
   th {
     background: var(--bg-color, #fafbfc);
     color: var(--heading-color, #222);
@@ -36,13 +39,18 @@ export default css`
     top: 0;
     z-index: 1;
   }
-  tr:nth-child(even) {
-    background: rgba(0, 0, 0, 0.02);
-  }
+
   tr:hover {
     background: rgba(0, 102, 204, 0.07);
     transition: background 0.2s;
   }
+
+  @media (prefers-reduced-motion: reduce) {
+    tr:hover {
+      transition: none;
+    }
+  }
+
   .hidden-col {
     display: none;
   }
