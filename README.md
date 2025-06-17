@@ -3,9 +3,6 @@
 
 UI displaying URL Classifier Exceptions stored in RemoteSettings.
 
-You can view the raw RemoteSettings data here:
-- 
-
 ## Development
 
 ### Getting Started
@@ -27,7 +24,7 @@ You can view the raw RemoteSettings data here:
 You can auto format code via:
 
 ```bash
-npm run prettier
+npm run lint[-fix]
 ```
 
 ### Building for Production
