@@ -9,7 +9,7 @@ import "./exceptions-table/exceptions-table";
 import "./exceptions-table/top-exceptions-table";
 import "./github-corner";
 
-const GITHUB_URL = "https://github.com/Trikolon/url-classifier-exceptions-ui";
+const GITHUB_URL = "https://github.com/mozilla/url-classifier-exceptions-ui";
 
 // Query parameter which can be used to override the RS environment.
 const QUERY_PARAM_RS_ENV = "rs_env";
