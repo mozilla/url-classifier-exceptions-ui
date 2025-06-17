@@ -5,7 +5,8 @@
 import { LitElement, html, css } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import { ExceptionListEntry, BugMetaMap } from "./types";
-import "./exceptions-table";
+import "./exceptions-table/exceptions-table";
+import "./exceptions-table/top-exceptions-table";
 import "./github-corner";
 
 const GITHUB_URL = "https://github.com/Trikolon/url-classifier-exceptions-ui";
@@ -139,34 +140,12 @@ export class App extends LitElement {
       padding: 1rem 0;
     }
 
-    /* First h2 gets z-index 10 */
-    h2:nth-of-type(1) {
-      z-index: 10;
-    }
-
-    /* Second h2 gets z-index 30 */
-    h2:nth-of-type(2) {
-      z-index: 30;
-    }
-
     h3 {
       position: sticky;
       top: 3rem;
       background: var(--bg-color);
       margin: 0;
       padding: 0.5rem 0;
-    }
-
-    /* First two h3s get z-index 20 */
-    h3:nth-of-type(1),
-    h3:nth-of-type(2) {
-      z-index: 20;
-    }
-
-    /* Last two h3s get z-index 40 */
-    h3:nth-of-type(3),
-    h3:nth-of-type(4) {
-      z-index: 40;
     }
 
     .error {
@@ -265,9 +244,9 @@ export class App extends LitElement {
         exceptions resolve a lot of untracked site breakage, i.e. breakage we don't have a bug for.
       </p>
 
-      <h2>Global Exceptions</h2>
+      <h2 style="z-index: 10;">Global Exceptions</h2>
 
-      <h3>Baseline</h3>
+      <h3 style="z-index: 20;">Baseline</h3>
       <exceptions-table
         id="global-baseline"
         .entries=${this.records}
@@ -276,7 +255,7 @@ export class App extends LitElement {
           !entry.topLevelUrlPattern?.length && entry.category === "baseline"}
       ></exceptions-table>
 
-      <h3>Convenience</h3>
+      <h3 style="z-index: 30;">Convenience</h3>
       <exceptions-table
         id="global-convenience"
         .entries=${this.records}
@@ -285,8 +264,8 @@ export class App extends LitElement {
           !entry.topLevelUrlPattern?.length && entry.category === "convenience"}
       ></exceptions-table>
 
-      <h2>Per-Site Exceptions</h2>
-      <h3>Baseline</h3>
+      <h2 style="z-index: 40;">Per-Site Exceptions</h2>
+      <h3 style="z-index: 50;">Baseline</h3>
       <exceptions-table
         id="per-site-baseline"
         .entries=${this.records}
@@ -295,7 +274,7 @@ export class App extends LitElement {
           !!entry.topLevelUrlPattern?.length && entry.category === "baseline"}
       ></exceptions-table>
 
-      <h3>Convenience</h3>
+      <h3 style="z-index: 60;">Convenience</h3>
       <exceptions-table
         id="per-site-convenience"
         .entries=${this.records}
@@ -303,6 +282,17 @@ export class App extends LitElement {
         .filter=${(entry: ExceptionListEntry) =>
           !!entry.topLevelUrlPattern?.length && entry.category === "convenience"}
       ></exceptions-table>
+
+      <h3 style="z-index: 70;">Top Resources</h3>
+      <p>
+        This table shows the top resources that are allow-listed via site-specific exception list
+        entries. If a resource is allow-listed under many top level sites, it can be an indicator
+        that it should be added to the global exceptions list.
+      </p>
+      <top-exceptions-table
+        .entries=${this.records}
+        .bugMeta=${this.bugMeta}
+      ></top-exceptions-table>
     `;
   }
 

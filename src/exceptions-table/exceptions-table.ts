@@ -4,11 +4,13 @@
 
 import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { BugMetaMap, ExceptionListEntry } from "./types";
-import "./badge";
-import "./bug-label";
-import "./exception-dialog";
-import { ExceptionDialog } from "./exception-dialog";
+import { BugMetaMap, ExceptionListEntry } from "../types";
+import "../badge";
+import "../bug-label";
+import "../exception-dialog";
+import { ExceptionDialog } from "../exception-dialog";
+import tableStyles from "./table-styles.css.ts";
+import { capitalizeFirstChar, renderUrlPattern } from "./utils.ts";
 
 /**
  * A table component for displaying exception list entries.
@@ -44,61 +46,8 @@ export class ExceptionsTable extends LitElement {
   }
 
   static styles = css`
-    .table-container {
-      overflow-x: auto;
-      margin: 1rem 0;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-      background: var(--bg-color, #fff);
-    }
-    table {
-      width: 100%;
-      border-collapse: separate;
-      border-spacing: 0;
-      min-width: 800px;
-      background: inherit;
-    }
-    th,
-    td {
-      padding: 0.6em 1em;
-      text-align: left;
-      border-bottom: 1px solid var(--border-color, #eee);
-      vertical-align: middle;
-      font-size: 0.97em;
-    }
-    th {
-      background: var(--bg-color, #fafbfc);
-      color: var(--heading-color, #222);
-      font-weight: 600;
-      position: sticky;
-      top: 0;
-      z-index: 1;
-    }
-    tr:nth-child(even) {
-      background: rgba(0, 0, 0, 0.02);
-    }
-    tr:hover {
-      background: rgba(0, 102, 204, 0.07);
-      transition: background 0.2s;
-    }
-    .hidden-col {
-      display: none;
-    }
-    .badges {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.3em;
-    }
+    ${tableStyles}
   `;
-
-  /**
-   * Capitalizes the first character of a string.
-   * @param str The string to capitalize.
-   * @returns The capitalized string.
-   */
-  private capitalizeFirstChar(str: string): string {
-    return str.charAt(0).toUpperCase() + str.slice(1);
-  }
 
   /**
    * Renders a list of ETP badges.
@@ -114,7 +63,7 @@ export class ExceptionsTable extends LitElement {
     return html`
       <span class="badges">
         ${categories.map(
-          (cat) => html` <ui-badge type="etp">ETP-${this.capitalizeFirstChar(cat)}</ui-badge> `,
+          (cat) => html` <ui-badge type="etp">ETP-${capitalizeFirstChar(cat)}</ui-badge> `,
         )}
       </span>
     `;
@@ -167,43 +116,6 @@ export class ExceptionsTable extends LitElement {
   }
 
   /**
-   * Get the host from a URL pattern using regex.
-   * @param urlPattern The URL pattern to get the host from.
-   * @returns The host from the URL pattern.
-   */
-  private getHostFromUrlPattern(urlPattern: string): string | null {
-    const match = urlPattern.match(/:\/\/(?:\*\.)?([^/*]+)/);
-
-    if (match?.length && match.length >= 2) {
-      return match[1];
-    }
-
-    console.warn("Failed to parse host from URL pattern", urlPattern);
-    return null;
-  }
-
-  /**
-   * Renders the URL pattern for an entry.
-   * For simplicity we show only the host part.
-   * The full pattern is shown on hover.
-   * @param urlPattern The URL pattern to render.
-   * @returns The rendered URL pattern.
-   */
-  private renderUrlPattern(urlPattern?: string) {
-    if (!urlPattern) {
-      return html`-`;
-    }
-    let host = this.getHostFromUrlPattern(urlPattern);
-
-    // If we can't parse the host, return the original URL pattern.
-    if (host == null) {
-      return urlPattern;
-    }
-
-    return html`<span title=${urlPattern}>${host}</span>`;
-  }
-
-  /**
    * Renders a list of bug labels for an entry.
    * @param entry The entry to render the bug labels for.
    * @returns The rendered bug labels.
@@ -241,9 +153,9 @@ export class ExceptionsTable extends LitElement {
                     <span class="badges"> ${this.renderBugLabels(entry)} </span>
                   </td>
                   <td class="${this.hasGlobalRules ? "" : "hidden-col"}">
-                    ${this.renderUrlPattern(entry.topLevelUrlPattern)}
+                    ${renderUrlPattern(entry.topLevelUrlPattern)}
                   </td>
-                  <td>${this.renderUrlPattern(entry.urlPattern)}</td>
+                  <td>${renderUrlPattern(entry.urlPattern)}</td>
                   <td>
                     <span class="badges">
                       ${Array.isArray(entry.classifierFeatures)

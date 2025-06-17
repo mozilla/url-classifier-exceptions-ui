@@ -11,8 +11,12 @@ import { ExceptionListEntry } from "./types";
  */
 @customElement("exception-dialog")
 export class ExceptionDialog extends LitElement {
+  // Callers can either pass a single entry or an array of entries.
   @property({ type: Object })
   entry?: ExceptionListEntry;
+
+  @property({ type: Array })
+  entries?: ExceptionListEntry[];
 
   static styles = css`
     dialog {
@@ -109,7 +113,9 @@ export class ExceptionDialog extends LitElement {
   }
 
   render() {
-    const formattedJson = JSON.stringify(this.entry, null, 2);
+    let json = this.entry ?? this.entries;
+
+    const formattedJson = JSON.stringify(json, null, 2);
 
     return html`
       <dialog @close=${this.enablePageScroll} @click=${this.onCloseButtonClick}>
