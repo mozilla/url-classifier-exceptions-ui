@@ -7,8 +7,8 @@ import { customElement, property } from "lit/decorators.js";
 import { BugMetaMap, ExceptionListEntry } from "../types";
 import "../badge";
 import "../bug-label";
-import "../exception-dialog";
-import { ExceptionDialog } from "../exception-dialog";
+import "./exception-dialog";
+import { ExceptionDialog } from "./exception-dialog";
 import tableStyles from "./table-styles.css.ts";
 import { capitalizeFirstChar, renderUrlPattern } from "./utils.ts";
 
