@@ -27,6 +27,16 @@ You can auto format code via:
 npm run lint[-fix]
 ```
 
+### Updating Exception List Entry Type
+
+The format for exception list entries is determined by Remote Settings. To
+generate the latest TypeScript type definitions based on the schema from Remote
+Settings you can use:
+
+```bash
+npm run update-types
+```
+
 ### Building for Production
 
 To create a production build:
