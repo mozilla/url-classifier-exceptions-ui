@@ -10,7 +10,7 @@ import "../bug-label";
 import "./exception-dialog";
 import { ExceptionDialog } from "./exception-dialog";
 import tableStyles from "./table-styles.css.ts";
-import { getHostFromUrlPattern, getBugMetaForEntry } from "./utils.ts";
+import { getHostFromUrlPattern } from "./utils.ts";
 
 interface TopResource {
   host: string;
