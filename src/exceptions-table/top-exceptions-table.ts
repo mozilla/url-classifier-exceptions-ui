@@ -10,7 +10,7 @@ import "../bug-label";
 import "./exception-dialog";
 import { ExceptionDialog } from "./exception-dialog";
 import tableStyles from "./table-styles.css.ts";
-import { getHostFromUrlPattern } from "./utils.ts";
+import { getHostFromUrlPattern, getBugMetaForEntry } from "./utils.ts";
 
 interface TopResource {
   host: string;
@@ -99,6 +99,7 @@ export class TopExceptionsTable extends LitElement {
         <table>
           <thead>
             <tr>
+              <th class="compact-col">Bugs</th>
               <th class="compact-col"># Sites</th>
               <th>Resource</th>
               <th>Detail</th>
@@ -108,6 +109,13 @@ export class TopExceptionsTable extends LitElement {
             ${this.topResources.map(
               (topResource) => html`
                 <tr>
+                  <td>
+                    <bug-label
+                      .bugMeta=${Array.from(topResource.bugIds)
+                        .map((id) => this.bugMeta[id])
+                        .filter((meta) => meta != null)}
+                    ></bug-label>
+                  </td>
                   <td class="compact-col">${topResource.topLevelSites.size}</td>
                   <td>${topResource.host}</td>
                   <td>

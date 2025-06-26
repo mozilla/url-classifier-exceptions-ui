@@ -115,17 +115,13 @@ export class ExceptionsTable extends LitElement {
     }
   }
 
-  private getBugMetaForEntry(entry: ExceptionListEntry) {
-    return entry.bugIds.map((id) => this.bugMeta[id]).filter((meta) => meta != null);
-  }
-
   private renderTable() {
     return html`
       <div class="table-container">
         <table>
           <thead>
             <tr>
-              <th>Bugs</th>
+              <th class="compact-col">Bugs</th>
               <th class="${this.hasGlobalRules ? "" : "hidden-col"}">Top Site</th>
               <th>Resource</th>
               <th>Classifier Features</th>
@@ -138,7 +134,11 @@ export class ExceptionsTable extends LitElement {
               (entry) => html`
                 <tr id=${entry.id ?? ""}>
                   <td>
-                    <bug-label .bugMeta=${this.getBugMetaForEntry(entry)}></bug-label>
+                    <bug-label
+                      .bugMeta=${entry.bugIds
+                        .map((id) => this.bugMeta[id])
+                        .filter((meta) => meta != null)}
+                    ></bug-label>
                   </td>
                   <td class="${this.hasGlobalRules ? "" : "hidden-col"}">
                     ${renderUrlPattern(entry.topLevelUrlPattern)}
