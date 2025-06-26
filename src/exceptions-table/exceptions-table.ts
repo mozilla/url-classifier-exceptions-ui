@@ -89,12 +89,9 @@ export class ExceptionsTable extends LitElement {
       <span class="badges">
         ${this.renderETPBadges(entry)}
         ${entry.filter_expression
-          ? html`<ui-badge
-              title="${entry.filter_expression}"
-              @click=${() => this.onDetailClick(entry)}
-              type="filter"
-              >RS Filter</ui-badge
-            >`
+          ? html`<ui-badge title="${entry.filter_expression}" type="filter">
+              <button @click=${() => this.onDetailClick(entry)}>RS Filter</button>
+            </ui-badge>`
           : ""}
         ${entry.isPrivateBrowsingOnly != null
           ? html`<ui-badge type="private">PBM Only</ui-badge>`
