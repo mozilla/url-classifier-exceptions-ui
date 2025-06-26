@@ -94,8 +94,6 @@ export class TopExceptionsTable extends LitElement {
   }
 
   private renderTable() {
-    console.debug("top resources", this.topResources);
-
     return html`
       <div class="table-container">
         <table>
