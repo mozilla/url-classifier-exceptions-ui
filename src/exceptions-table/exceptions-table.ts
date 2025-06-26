@@ -136,7 +136,7 @@ export class ExceptionsTable extends LitElement {
           <tbody>
             ${this.filteredEntries.map(
               (entry) => html`
-                <tr>
+                <tr id=${entry.id ?? ""}>
                   <td>
                     <bug-label .bugMeta=${this.getBugMetaForEntry(entry)}></bug-label>
                   </td>
