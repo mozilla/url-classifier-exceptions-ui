@@ -102,6 +102,19 @@ async function fetchBugMetadata(bugIds: Set<string>): Promise<BugMetaMap> {
     };
   }
 
+  // For some bugs Bugzilla may not return data, e.g. because they are sec bugs.
+  // In this case we still want to include the bug ID in the map, so it gets listed
+  // but with placeholder values.
+  for (let bugId of bugIds) {
+    if (!bugMetaMap[bugId]) {
+      bugMetaMap[bugId] = {
+        id: bugId,
+        isOpen: false,
+        summary: "Unavailable",
+      };
+    }
+  }
+
   return bugMetaMap;
 }
 

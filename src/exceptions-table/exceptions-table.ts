@@ -115,20 +115,8 @@ export class ExceptionsTable extends LitElement {
     }
   }
 
-  /**
-   * Renders a list of bug labels for an entry.
-   * @param entry The entry to render the bug labels for.
-   * @returns The rendered bug labels.
-   */
-  private renderBugLabels(entry: ExceptionListEntry) {
-    if (!Array.isArray(entry.bugIds) || entry.bugIds.length === 0) {
-      return html``;
-    }
-    return html`<span class="badges"
-      >${entry.bugIds.map(
-        (bugId) => html`<bug-label .bugMeta=${this.bugMeta[bugId]}></bug-label>`,
-      )}</span
-    >`;
+  private getBugMetaForEntry(entry: ExceptionListEntry) {
+    return entry.bugIds.map((id) => this.bugMeta[id]).filter((meta) => meta != null);
   }
 
   private renderTable() {
@@ -150,7 +138,7 @@ export class ExceptionsTable extends LitElement {
               (entry) => html`
                 <tr>
                   <td>
-                    <span class="badges"> ${this.renderBugLabels(entry)} </span>
+                    <bug-label .bugMeta=${this.getBugMetaForEntry(entry)}></bug-label>
                   </td>
                   <td class="${this.hasGlobalRules ? "" : "hidden-col"}">
                     ${renderUrlPattern(entry.topLevelUrlPattern)}

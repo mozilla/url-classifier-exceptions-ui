@@ -9,17 +9,14 @@ import { BugMeta } from "./types";
 
 /**
  * A component for displaying a bug label with a bugzilla icon.
- * The bug info is asynchronously fetched from the Bugzilla REST API.
+ * If only a single bug is provided, it will display the bug's metadata along with a link to the bug.
+ * If multiple bugs are provided, it will display a link to a Bugzilla bug list.
  */
 @customElement("bug-label")
 export class BugLabel extends LitElement {
-  // Holds all bug metadata to display.
-  @property({ type: Object })
-  bugMeta: BugMeta = {
-    id: "",
-    isOpen: true,
-    summary: "",
-  };
+  // Holds either a single bug or a list of bugs to display.
+  @property({ type: Array })
+  bugMeta: BugMeta[] = [];
 
   static styles = css`
     :host {
@@ -44,17 +41,34 @@ export class BugLabel extends LitElement {
     }
   `;
 
-  render() {
+  /**
+   * Get the URL for a Bugzilla bug list.
+   * @param bugIds The bug IDs to get the URL for.
+   * @returns The URL for the list of bugs.
+   */
+  private getBugListUrl() {
+    const url = new URL("https://bugzilla.mozilla.org/buglist.cgi");
+    url.searchParams.set("bug_id", this.bugIds.join(","));
+    return url.toString();
+  }
+
+  private get bugIds() {
+    return this.bugMeta.map((bug) => bug.id);
+  }
+
+  private renderSingleBugLabel() {
+    let bug = this.bugMeta[0];
+
     return html`
       <a
         class="bug-label"
-        href="https://bugzilla.mozilla.org/show_bug.cgi?id=${this.bugMeta.id}"
+        href="https://bugzilla.mozilla.org/show_bug.cgi?id=${bug.id}"
         target="_blank"
         rel="noopener noreferrer"
-        title=${`Bug ${this.bugMeta.id}: ${this.bugMeta.summary}`}
+        title=${`Bug ${bug.id}: ${bug.summary}`}
       >
         <img
-          class="bug-icon ${!this.bugMeta.isOpen ? "closed" : ""}"
+          class="bug-icon ${!bug.isOpen ? "closed" : ""}"
           src=${bugzillaIcon}
           alt="Bugzilla Icon"
           width="32"
@@ -62,5 +76,31 @@ export class BugLabel extends LitElement {
         />
       </a>
     `;
+  }
+
+  private renderMultipleBugsLabel() {
+    return html`
+      <a
+        class="bug-label"
+        href=${this.getBugListUrl()}
+        target="_blank"
+        rel="noopener noreferrer"
+        title=${`Bug ${this.bugIds.join(", ")}`}
+      >
+        <img class="bug-icon" src=${bugzillaIcon} alt="Bugzilla Icon" width="32" height="32" />
+      </a>
+    `;
+  }
+
+  render() {
+    if (this.bugMeta.length === 0) {
+      return html``;
+    }
+
+    if (this.bugMeta.length === 1) {
+      return this.renderSingleBugLabel();
+    } else {
+      return this.renderMultipleBugsLabel();
+    }
   }
 }
