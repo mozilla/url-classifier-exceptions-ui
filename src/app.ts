@@ -228,6 +228,29 @@ export class App extends LitElement {
   }
 
   /**
+   * Handle anchor navigation. We need to do this via JS because native navigation
+   * does not traverse shadow DOM.
+   * @param event The event object.
+   */
+  private handleAnchorNavigation(event: Event) {
+    event.preventDefault();
+    if (!(event.target instanceof HTMLAnchorElement)) {
+      return;
+    }
+
+    let target = event.target as HTMLAnchorElement;
+
+    if (!target.hash.startsWith("#")) {
+      return;
+    }
+
+    const element = this.shadowRoot?.querySelector(target.hash);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    }
+  }
+
+  /**
    * Renders the main content of the app which is dependent on the fetched records.
    * @returns The main content.
    */
@@ -246,9 +269,11 @@ export class App extends LitElement {
     return html`
       <p>
         There are currently a total of ${this.records.length} exceptions on record.
-        ${this.records.filter((e) => !e.topLevelUrlPattern?.length).length} global exceptions and
-        ${this.records.filter((e) => e.topLevelUrlPattern?.length).length} per-site exceptions.
-        ${this.records.filter((e) => e.category === "baseline").length} of them are baseline
+        ${this.records.filter((e) => !e.topLevelUrlPattern?.length).length}
+        <a href="#global-exceptions" @click=${this.handleAnchorNavigation}>global exceptions</a> and
+        ${this.records.filter((e) => e.topLevelUrlPattern?.length).length}
+        <a href="#per-site-exceptions" @click=${this.handleAnchorNavigation}>per-site exceptions</a
+        >. ${this.records.filter((e) => e.category === "baseline").length} of them are baseline
         exceptions and ${this.records.filter((e) => e.category === "convenience").length}
         convenience exceptions.
       </p>
@@ -258,7 +283,7 @@ export class App extends LitElement {
       </p>
 
       <section style="z-index: 10;">
-        <h2 style="z-index: 20;">Global Exceptions</h2>
+        <h2 id="global-exceptions" style="z-index: 20;">Global Exceptions</h2>
         <p>
           Global exceptions are applied for sub-resources across all top level sites. They are
           applied when blocking a resource breaks many sites.
@@ -284,7 +309,7 @@ export class App extends LitElement {
       </section>
 
       <section style="z-index: 50;">
-        <h2 style="z-index: 60;">Per-Site Exceptions</h2>
+        <h2 id="per-site-exceptions" style="z-index: 60;">Per-Site Exceptions</h2>
         <p>
           Per-site exceptions are applied for sub-resources on a specific top level site. They are
           applied for site specific breakage.
