@@ -78,6 +78,10 @@ export class BugLabel extends LitElement {
     `;
   }
 
+  private get allBugsClosed() {
+    return this.bugMeta.every((bug) => !bug.isOpen);
+  }
+
   private renderMultipleBugsLabel() {
     return html`
       <a
@@ -87,7 +91,13 @@ export class BugLabel extends LitElement {
         rel="noopener noreferrer"
         title=${`Bug ${this.bugIds.join(", ")}`}
       >
-        <img class="bug-icon" src=${bugzillaIcon} alt="Bugzilla Icon" width="32" height="32" />
+        <img
+          class="bug-icon ${this.allBugsClosed ? "closed" : ""}"
+          src=${bugzillaIcon}
+          alt="Bugzilla Icon"
+          width="32"
+          height="32"
+        />
       </a>
     `;
   }
