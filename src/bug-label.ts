@@ -19,21 +19,8 @@ export class BugLabel extends LitElement {
   bugMeta: BugMeta[] = [];
 
   static styles = css`
-    :host {
-      display: inline-block;
-    }
-    .bug-label {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5em;
-      text-decoration: none;
-      color: inherit;
-    }
     .bug-label:hover {
-      text-decoration: underline;
-    }
-    .bug-icon {
-      transition: filter 0.2s ease;
+      opacity: 0.7;
     }
     .bug-icon.closed {
       filter: grayscale(100%);
