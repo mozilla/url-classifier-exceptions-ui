@@ -417,7 +417,7 @@ export class App extends LitElement {
               <option value="dev" ?selected=${this.rsEnv === "dev"}>Dev</option>
             </select>
             <br />
-            <label for="rs-env-preview">Show changes pending review:</label>
+            <label for="rs-env-preview">Include changes pending review:</label>
             <input
               id="rs-env-preview"
               type="checkbox"
