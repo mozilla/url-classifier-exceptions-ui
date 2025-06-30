@@ -9,7 +9,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "update-types": "node scripts/updateTypesFromSchema.cjs"
+    "update-types": "node scripts/updateTypesFromSchema.mjs"
   },
   "author": "Emma Zuehlcke",
   "license": "MPL-2.0",

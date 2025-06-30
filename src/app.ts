@@ -5,6 +5,7 @@
 import { LitElement, html, css } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import { ExceptionListEntry, BugMetaMap } from "./types";
+import { getRSEndpoint, RSEnvironment, isRSEnvValid } from "../scripts/rs-config.js";
 import "./exceptions-table/exceptions-table";
 import "./exceptions-table/top-exceptions-table";
 import "./github-corner";
@@ -13,51 +14,52 @@ const GITHUB_URL = "https://github.com/mozilla/url-classifier-exceptions-ui";
 
 // Query parameter which can be used to override the RS environment.
 const QUERY_PARAM_RS_ENV = "rs_env";
-
-// The available Remote Settings endpoints.
-const RS_ENDPOINTS = {
-  prod: "https://firefox.settings.services.mozilla.com",
-  stage: "https://firefox.settings.services.allizom.org",
-  dev: "https://remote-settings-dev.allizom.org",
-} as const;
-
-type RSEndpointKey = keyof typeof RS_ENDPOINTS;
+const QUERY_PARAM_RS_USE_PREVIEW = "rs_preview";
 
 /**
  * Get the RS environment from URL parameters, falling back to the defaults if
  * not specified.
  * @returns The RS environment key
  */
-function getRsEnv(): RSEndpointKey {
+function getRsEnv(): { env: RSEnvironment; usePreview: boolean } {
+  // Check if the environment is specified in the URL.
   const params = new URLSearchParams(window.location.search);
   const env = params.get(QUERY_PARAM_RS_ENV);
-  if (env && Object.keys(RS_ENDPOINTS).includes(env)) {
-    return env as RSEndpointKey;
+  const usePreview = params.get(QUERY_PARAM_RS_USE_PREVIEW) === "true";
+  if (isRSEnvValid(env)) {
+    return { env: env as RSEnvironment, usePreview };
   }
-  // Fall back to build env configuration or if env is not set, the default of "prod".
-  return (import.meta.env.VITE_RS_ENVIRONMENT as RSEndpointKey) || "prod";
+
+  // Fall back to build-time environment variable.
+  let viteEnv = import.meta.env.VITE_RS_ENVIRONMENT;
+  if (isRSEnvValid(viteEnv)) {
+    return { env: viteEnv as RSEnvironment, usePreview: false };
+  }
+
+  // Otherwise default to prod, non preview.
+  return { env: "prod", usePreview: false };
 }
 
 /**
  * Get the URL for the records endpoint for a given Remote Settings environment.
- * @param rsOrigin The origin of the Remote Settings environment.
+ * @param rsUrl The URL of the Remote Settings environment.
  * @returns The URL for the records endpoint.
  */
-function getRecordsUrl(rsOrigin: string): string {
+function getRecordsUrl(rsUrl: string): string {
   // Allow ENV to override the URL for testing.
   if (import.meta.env.VITE_RS_RECORDS_URL) {
     return import.meta.env.VITE_RS_RECORDS_URL;
   }
-  return `${rsOrigin}/v1/buckets/main/collections/url-classifier-exceptions/records`;
+  return rsUrl;
 }
 
 /**
  * Fetch the records from the Remote Settings environment.
- * @param rsOrigin The origin of the Remote Settings environment.
+ * @param rsUrl The URL of the Remote Settings environment.
  * @returns The records.
  */
-async function fetchRecords(rsOrigin: string): Promise<ExceptionListEntry[]> {
-  const response = await fetch(getRecordsUrl(rsOrigin));
+async function fetchRecords(rsUrl: string): Promise<ExceptionListEntry[]> {
+  const response = await fetch(getRecordsUrl(rsUrl));
   if (!response.ok) {
     throw new Error(`Failed to fetch records: ${response.statusText}`);
   }
@@ -124,7 +126,13 @@ export class App extends LitElement {
   // at build time. The user can change this via a dropdown. The user can also
   // override the environment via a query parameter.
   @state()
-  rsEnv: RSEndpointKey = getRsEnv();
+  rsEnv: RSEnvironment = "prod";
+
+  // Whether to use the preview environment. This bucket includes changes that
+  // are still pending review. The user can change this via a checkbox. It can
+  // also be overridden via a query parameter.
+  @state()
+  rsEnvUsePreview: boolean = false;
 
   // Holds all fetched records.
   @state()
@@ -187,6 +195,12 @@ export class App extends LitElement {
    */
   connectedCallback() {
     super.connectedCallback();
+
+    // Set the initial RS environment and preview setting.
+    let { env, usePreview } = getRsEnv();
+    this.rsEnv = env;
+    this.rsEnvUsePreview = usePreview;
+
     this.init();
   }
 
@@ -196,7 +210,9 @@ export class App extends LitElement {
   async init() {
     try {
       this.loading = true;
-      this.records = await fetchRecords(RS_ENDPOINTS[this.rsEnv]);
+
+      const urlStr = getRSEndpoint(this.rsEnv, this.rsEnvUsePreview).toString();
+      this.records = await fetchRecords(urlStr);
 
       // Spot check if the format is as expected.
       if (this.records.length && this.records[0].bugIds == null) {
@@ -225,6 +241,31 @@ export class App extends LitElement {
    */
   get uniqueBugCount(): number {
     return new Set(this.records.flatMap((record) => record.bugIds || [])).size;
+  }
+
+  /**
+   * Handle changes to RS environment settings via the UI.
+   * @param event The change event either the dropdown or the checkbox.
+   */
+  private handleRSEnvChange(event: Event) {
+    const target = event.target as HTMLSelectElement | HTMLInputElement;
+
+    if (target.id === "rs-env") {
+      this.rsEnv = (target as HTMLSelectElement).value as RSEnvironment;
+      // Reset preview setting when environment changes.
+      this.rsEnvUsePreview = false;
+    } else if (target.id === "rs-env-preview") {
+      this.rsEnvUsePreview = (target as HTMLInputElement).checked;
+    }
+
+    // Update URL parameters to reflect current settings
+    const url = new URL(window.location.href);
+    url.searchParams.set(QUERY_PARAM_RS_ENV, this.rsEnv);
+    url.searchParams.set(QUERY_PARAM_RS_USE_PREVIEW, this.rsEnvUsePreview.toString());
+    window.history.pushState({}, "", url);
+
+    // Fetch the records again with the new settings
+    this.init();
   }
 
   /**
@@ -370,32 +411,28 @@ export class App extends LitElement {
         <footer>
           <p>
             <label for="rs-env">Remote Settings Environment:</label>
-            <select
-              id="rs-env"
-              @change=${(e: Event) => {
-                const newEnv = (e.target as HTMLSelectElement).value as RSEndpointKey;
-                this.rsEnv = newEnv;
-
-                // When the env changes reflect the update in the URL.
-                // Update URL parameter without reloading the page
-                const url = new URL(window.location.href);
-                url.searchParams.set(QUERY_PARAM_RS_ENV, newEnv);
-                window.history.pushState({}, "", url);
-
-                // Fetch the records again.
-                this.init();
-              }}
-            >
+            <select id="rs-env" @change=${this.handleRSEnvChange}>
               <option value="prod" ?selected=${this.rsEnv === "prod"}>Prod</option>
               <option value="stage" ?selected=${this.rsEnv === "stage"}>Stage</option>
               <option value="dev" ?selected=${this.rsEnv === "dev"}>Dev</option>
             </select>
+            <br />
+            <label for="rs-env-preview">Show changes pending review:</label>
+            <input
+              id="rs-env-preview"
+              type="checkbox"
+              ?checked=${this.rsEnvUsePreview}
+              @change=${this.handleRSEnvChange}
+            />
           </p>
           <p>
             Data source:
-            <a href="${getRecordsUrl(RS_ENDPOINTS[this.rsEnv])}"
-              >${getRecordsUrl(RS_ENDPOINTS[this.rsEnv])}</a
-            >.
+            ${(() => {
+              const recordsUrl = getRecordsUrl(
+                getRSEndpoint(this.rsEnv, this.rsEnvUsePreview).toString(),
+              );
+              return html`<a href="${recordsUrl}">${recordsUrl}</a>`;
+            })()}.
           </p>
         </footer>
         <!-- Show a link to the repository in the top right corner -->
