@@ -160,13 +160,13 @@ export class Settings extends LitElement {
           >
             <option value="" ?selected=${this.filterFirefoxChannel === null}>All</option>
             <option value="nightly" ?selected=${this.filterFirefoxChannel === "nightly"}
-              >Nightly ${this.firefoxVersions?.nightly}</option
+              >Nightly (${this.firefoxVersions?.nightly})</option
             >
             <option value="beta" ?selected=${this.filterFirefoxChannel === "beta"}
-              >Beta ${this.firefoxVersions?.beta}</option
+              >Beta (${this.firefoxVersions?.beta})</option
             >
             <option value="release" ?selected=${this.filterFirefoxChannel === "release"}
-              >Release ${this.firefoxVersions?.release}</option
+              >Release (${this.firefoxVersions?.release})</option
             >
           </select>
 
