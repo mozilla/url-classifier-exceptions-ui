@@ -22,3 +22,13 @@ export interface BugMetaMap {
 export interface ExceptionListEntry extends URLClassifierExceptionListEntry {
   last_modified: number;
 }
+
+// Firefox release channels for version filtering.
+export type FirefoxChannel = "nightly" | "beta" | "release";
+
+// Firefox versions for each release channel.
+export interface FirefoxVersions {
+  nightly: string;
+  beta: string;
+  release: string;
+}
