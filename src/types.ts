@@ -24,11 +24,12 @@ export interface ExceptionListEntry extends URLClassifierExceptionListEntry {
 }
 
 // Firefox release channels for version filtering.
-export type FirefoxChannel = "nightly" | "beta" | "release";
+export type FirefoxChannel = "nightly" | "beta" | "release" | "esr";
 
 // Firefox versions for each release channel.
 export interface FirefoxVersions {
   nightly: string;
   beta: string;
   release: string;
+  esr: string;
 }

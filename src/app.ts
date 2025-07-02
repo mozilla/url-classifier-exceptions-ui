@@ -88,29 +88,16 @@ async function fetchBugMetadata(bugIds: Set<string>): Promise<BugMetaMap> {
  * @returns The versions for each release channel.
  */
 async function fetchVersionsPerChannel(): Promise<FirefoxVersions> {
-  let [nightly, beta, release] = await Promise.all([
-    fetchVersionNumber("nightly"),
-    fetchVersionNumber("beta"),
-    fetchVersionNumber("release"),
-  ]);
-  return {
-    nightly,
-    beta,
-    release,
-  };
-}
-
-/**
- * Fetch the version number for a given release channel.
- * @param releaseChannel The release channel to fetch the version number for.
- * @returns The version number for the given release channel.
- */
-async function fetchVersionNumber(releaseChannel: string): Promise<string> {
-  let url = new URL("https://whattrainisitnow.com/api/release/schedule/");
-  url.searchParams.set("version", releaseChannel);
+  const url = "https://product-details.mozilla.org/1.0/firefox_versions.json";
   const response = await fetch(url);
   const json = await response.json();
-  return json.version;
+
+  return {
+    nightly: json.FIREFOX_NIGHTLY,
+    beta: json.LATEST_FIREFOX_RELEASED_DEVEL_VERSION,
+    release: json.LATEST_FIREFOX_VERSION,
+    esr: json.FIREFOX_ESR,
+  };
 }
 
 @customElement("app-root")
