@@ -4,8 +4,8 @@
 
 import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import bugzillaIcon from "./assets/bugzilla-icon.svg";
-import { BugMeta } from "./types";
+import bugzillaIcon from "../assets/bugzilla-icon.svg";
+import { BugMeta } from "../types";
 
 /**
  * A component for displaying a bug label with a bugzilla icon.

@@ -4,7 +4,7 @@
 
 import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { BugMetaMap, ExceptionListEntry } from "../types";
+import { BugMetaMap, ExceptionListEntry } from "../../types";
 import "../badge";
 import "../bug-label";
 import "./exception-dialog";
