@@ -10,6 +10,8 @@ import "./exceptions-table/exceptions-table";
 import "./exceptions-table/top-exceptions-table";
 import "./github-corner";
 
+import { versionNumberMatchesFilterExpression } from "./filter-expression/filter-expression.js";
+
 const GITHUB_URL = "https://github.com/mozilla/url-classifier-exceptions-ui";
 
 // Query parameter which can be used to override the RS environment.
@@ -120,6 +122,40 @@ async function fetchBugMetadata(bugIds: Set<string>): Promise<BugMetaMap> {
   return bugMetaMap;
 }
 
+/**
+ * Fetch the versions for each Firefox release channel.
+ * @returns The versions for each release channel.
+ */
+async function fetchVersionsPerChannel(): Promise<{
+  nightly: string;
+  beta: string;
+  release: string;
+}> {
+  let [nightly, beta, release] = await Promise.all([
+    fetchVersionNumber("nightly"),
+    fetchVersionNumber("beta"),
+    fetchVersionNumber("release"),
+  ]);
+  return {
+    nightly,
+    beta,
+    release,
+  };
+}
+
+/**
+ * Fetch the version number for a given release channel.
+ * @param releaseChannel The release channel to fetch the version number for.
+ * @returns The version number for the given release channel.
+ */
+async function fetchVersionNumber(releaseChannel: string): Promise<string> {
+  let url = new URL("https://whattrainisitnow.com/api/release/schedule/");
+  url.searchParams.set("version", releaseChannel);
+  const response = await fetch(url);
+  const json = await response.json();
+  return json.version;
+}
+
 @customElement("app-root")
 export class App extends LitElement {
   // The Remote Settings environment to use. The default is configured via env
@@ -138,6 +174,11 @@ export class App extends LitElement {
   @state()
   records: ExceptionListEntry[] = [];
 
+  // Holds all fetched records matching the current Firefox version filter or
+  // all records if no filter is selected.
+  @state()
+  displayRecords: ExceptionListEntry[] = [];
+
   // Holds the metadata for all bugs that are associated with the exceptions
   // list.
   @state()
@@ -149,6 +190,17 @@ export class App extends LitElement {
   // Holds error message if fetching records fails.
   @state()
   error: string | null = null;
+
+  // Holds the version numbers for each Firefox release channel.
+  @state()
+  firefoxVersions: {
+    nightly: string;
+    beta: string;
+    release: string;
+  } | null = null;
+
+  @state()
+  filterFirefoxChannel: "nightly" | "beta" | "release" | null = null;
 
   static styles = css`
     /* Sticky headings. */
@@ -211,21 +263,17 @@ export class App extends LitElement {
     try {
       this.loading = true;
 
-      const urlStr = getRSEndpoint(this.rsEnv, this.rsEnvUsePreview).toString();
-      this.records = await fetchRecords(urlStr);
+      await this.updateVersionInfo();
 
-      // Spot check if the format is as expected.
-      if (this.records.length && this.records[0].bugIds == null) {
-        throw new Error("Unexpected or outdated format.");
+      // If we successfully fetched the version info, set the default filter to
+      // the latest release channel. We need to do this before calling
+      // this.updateRecords so that the initial display is correctly filtered.
+      if (this.firefoxVersions) {
+        this.filterFirefoxChannel = "release";
       }
 
-      // Sort so most recently modified records are at the top.
-      this.records.sort((a, b) => b.last_modified - a.last_modified);
-
-      // Fetch the metadata for all bugs that are associated with the exceptions list.
-      this.bugMeta = await fetchBugMetadata(
-        new Set(this.records.flatMap((record) => record.bugIds || [])),
-      );
+      // Fetch the records.
+      await this.updateRecords();
 
       this.error = null;
     } catch (error: any) {
@@ -236,18 +284,101 @@ export class App extends LitElement {
   }
 
   /**
+   * Fetch the versions for each Firefox release channel and store it.
+   */
+  async updateVersionInfo() {
+    // Fetch the versions for each release channel.
+    try {
+      this.firefoxVersions = await fetchVersionsPerChannel();
+      console.debug("versions", this.firefoxVersions);
+    } catch (error) {
+      console.error("Failed to fetch Firefox versions", error);
+    }
+  }
+
+  /**
+   * Fetch the records from the Remote Settings environment and store it.
+   */
+  async updateRecords() {
+    const urlStr = getRSEndpoint(this.rsEnv, this.rsEnvUsePreview).toString();
+    this.records = await fetchRecords(urlStr);
+
+    // Spot check if the format is as expected.
+    if (this.records.length && this.records[0].bugIds == null) {
+      throw new Error("Unexpected or outdated format.");
+    }
+
+    // Sort so most recently modified records are at the top.
+    this.records.sort((a, b) => b.last_modified - a.last_modified);
+
+    // Update the filtered records based on the selected Firefox version.
+    let updateFilteredRecordsPromise = this.updateFilteredRecords();
+
+    // Fetch the metadata for all bugs that are associated with the exceptions list.
+    let fetchBugMetadataPromise = fetchBugMetadata(
+      new Set(this.records.flatMap((record) => record.bugIds || [])),
+    ).then((bugMeta) => {
+      this.bugMeta = bugMeta;
+    });
+
+    // Wait for both promises to complete.
+    await Promise.all([updateFilteredRecordsPromise, fetchBugMetadataPromise]);
+  }
+
+  /**
+   * Updates the filtered records based on current filter settings.
+   * This should be called whenever records filterFirefoxChannel, or
+   * firefoxVersions change.
+   */
+  private async updateFilteredRecords() {
+    // If no Firefox version is selected, show all records.
+    if (!this.filterFirefoxChannel || !this.firefoxVersions) {
+      this.displayRecords = this.records;
+      return;
+    }
+
+    // Get the records that match the selected Firefox version.
+    const targetVersion = this.firefoxVersions[this.filterFirefoxChannel];
+    this.displayRecords = await this.getRecordsMatchingFirefoxVersion(targetVersion);
+  }
+
+  /**
    * Get the number of unique bugs that are associated with the exceptions list
    * @returns The number of unique bugs.
    */
   get uniqueBugCount(): number {
-    return new Set(this.records.flatMap((record) => record.bugIds || [])).size;
+    return new Set(this.displayRecords.flatMap((record) => record.bugIds || [])).size;
+  }
+
+  /**
+   * Get the records that match the given Firefox version.
+   * Uses the filter_expression field to match records.
+   * @param firefoxVersion The Firefox version to match.
+   * @returns The records that match the given Firefox version.
+   */
+  private async getRecordsMatchingFirefoxVersion(
+    firefoxVersion: string,
+  ): Promise<ExceptionListEntry[]> {
+    let filteredRecords = await Promise.all(
+      this.records.map(async (record) => {
+        let matches = await versionNumberMatchesFilterExpression(
+          firefoxVersion,
+          record.filter_expression,
+        );
+        if (matches) {
+          return record;
+        }
+        return null;
+      }),
+    );
+    return filteredRecords.filter((record) => record !== null);
   }
 
   /**
    * Handle changes to RS environment settings via the UI.
    * @param event The change event either the dropdown or the checkbox.
    */
-  private handleRSEnvChange(event: Event) {
+  private async handleRSEnvChange(event: Event) {
     const target = event.target as HTMLSelectElement | HTMLInputElement;
 
     if (target.id === "rs-env") {
@@ -265,7 +396,31 @@ export class App extends LitElement {
     window.history.pushState({}, "", url);
 
     // Fetch the records again with the new settings
-    this.init();
+    try {
+      this.loading = true;
+
+      await this.updateRecords();
+
+      this.error = null;
+    } catch (error: any) {
+      this.error = error?.message || "Failed to initialize";
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  /**
+   * Handle changes to the Firefox version filter via the UI.
+   * @param event The change event.
+   */
+  private async handleFirefoxVersionFilterChange(event: Event) {
+    const target = event.target as HTMLSelectElement;
+
+    this.filterFirefoxChannel = target.value as keyof typeof this.firefoxVersions;
+
+    // Update the filtered records based on the selected Firefox version.
+    // This does not require a full re-fetch of the records.
+    await this.updateFilteredRecords();
   }
 
   /**
@@ -304,19 +459,20 @@ export class App extends LitElement {
       return html`<div>Loading...</div>`;
     }
 
-    if (this.records.length === 0) {
+    if (this.displayRecords.length === 0) {
       return html`<div>No records found.</div>`;
     }
     return html`
       <p>
-        There are currently a total of ${this.records.length} exceptions on record.
-        ${this.records.filter((e) => !e.topLevelUrlPattern?.length).length}
+        There are currently a total of ${this.displayRecords.length} exceptions on record.
+        ${this.displayRecords.filter((e) => !e.topLevelUrlPattern?.length).length}
         <a href="#global-exceptions" @click=${this.handleAnchorNavigation}>global exceptions</a> and
-        ${this.records.filter((e) => e.topLevelUrlPattern?.length).length}
+        ${this.displayRecords.filter((e) => e.topLevelUrlPattern?.length).length}
         <a href="#per-site-exceptions" @click=${this.handleAnchorNavigation}>per-site exceptions</a
-        >. ${this.records.filter((e) => e.category === "baseline").length} of them are baseline
-        exceptions and ${this.records.filter((e) => e.category === "convenience").length}
-        convenience exceptions.
+        >. ${this.displayRecords.filter((e) => e.category === "baseline").length} of them are
+        baseline exceptions and
+        ${this.displayRecords.filter((e) => e.category === "convenience").length} convenience
+        exceptions.
       </p>
       <p>
         Overall the exceptions resolve ${this.uniqueBugCount} known bugs. Note that global
@@ -333,7 +489,7 @@ export class App extends LitElement {
         <h3 style="z-index: 30;">Baseline</h3>
         <exceptions-table
           id="global-baseline"
-          .entries=${this.records}
+          .entries=${this.displayRecords}
           .bugMeta=${this.bugMeta}
           .filter=${(entry: ExceptionListEntry) =>
             !entry.topLevelUrlPattern?.length && entry.category === "baseline"}
@@ -342,7 +498,7 @@ export class App extends LitElement {
         <h3 style="z-index: 40;">Convenience</h3>
         <exceptions-table
           id="global-convenience"
-          .entries=${this.records}
+          .entries=${this.displayRecords}
           .bugMeta=${this.bugMeta}
           .filter=${(entry: ExceptionListEntry) =>
             !entry.topLevelUrlPattern?.length && entry.category === "convenience"}
@@ -359,7 +515,7 @@ export class App extends LitElement {
         <h3 style="z-index: 70;">Baseline</h3>
         <exceptions-table
           id="per-site-baseline"
-          .entries=${this.records}
+          .entries=${this.displayRecords}
           .bugMeta=${this.bugMeta}
           .filter=${(entry: ExceptionListEntry) =>
             !!entry.topLevelUrlPattern?.length && entry.category === "baseline"}
@@ -368,7 +524,7 @@ export class App extends LitElement {
         <h3 style="z-index: 80;">Convenience</h3>
         <exceptions-table
           id="per-site-convenience"
-          .entries=${this.records}
+          .entries=${this.displayRecords}
           .bugMeta=${this.bugMeta}
           .filter=${(entry: ExceptionListEntry) =>
             !!entry.topLevelUrlPattern?.length && entry.category === "convenience"}
@@ -381,7 +537,7 @@ export class App extends LitElement {
           that it should be added to the global exceptions list.
         </p>
         <top-exceptions-table
-          .entries=${this.records}
+          .entries=${this.displayRecords}
           .bugMeta=${this.bugMeta}
         ></top-exceptions-table>
       </section>
@@ -409,13 +565,33 @@ export class App extends LitElement {
         ${this.renderMainContent()}
 
         <footer>
-          <p>
+          <div id="settings">
             <label for="rs-env">Remote Settings Environment:</label>
             <select id="rs-env" @change=${this.handleRSEnvChange}>
               <option value="prod" ?selected=${this.rsEnv === "prod"}>Prod</option>
               <option value="stage" ?selected=${this.rsEnv === "stage"}>Stage</option>
               <option value="dev" ?selected=${this.rsEnv === "dev"}>Dev</option>
             </select>
+            <br />
+            <div id="firefox-version-picker">
+              <label for="fx-version">Firefox Version:</label>
+              <select
+                id="fx-version"
+                @change=${this.handleFirefoxVersionFilterChange}
+                ?disabled=${!this.firefoxVersions}
+              >
+                <option value="" ?selected=${this.filterFirefoxChannel === null}>All</option>
+                <option value="nightly" ?selected=${this.filterFirefoxChannel === "nightly"}
+                  >Nightly ${this.firefoxVersions?.nightly}</option
+                >
+                <option value="beta" ?selected=${this.filterFirefoxChannel === "beta"}
+                  >Beta ${this.firefoxVersions?.beta}</option
+                >
+                <option value="release" ?selected=${this.filterFirefoxChannel === "release"}
+                  >Release ${this.firefoxVersions?.release}</option
+                >
+              </select>
+            </div>
             <br />
             <label for="rs-env-preview">Include changes pending review:</label>
             <input
@@ -424,7 +600,8 @@ export class App extends LitElement {
               ?checked=${this.rsEnvUsePreview}
               @change=${this.handleRSEnvChange}
             />
-          </p>
+          </div>
+
           <p>
             Data source:
             ${(() => {
