@@ -240,6 +240,44 @@ export class App extends LitElement {
       font-size: 0.8rem;
       color: var(--text-secondary);
     }
+
+    /* Settings section */
+    #settings-content {
+      padding: 1.5rem 2rem;
+      background: var(--bg-secondary, #232323);
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      display: grid;
+      grid-template-columns: max-content 1fr;
+      gap: 1rem 1.5rem;
+      align-items: center;
+      max-width: 480px;
+    }
+    #settings-content label {
+      justify-self: end;
+      margin-right: 0.5rem;
+      font-weight: 500;
+    }
+    #settings-content select,
+    #settings-content input[type="checkbox"] {
+      margin-left: 0.5rem;
+      font-size: 1rem;
+    }
+    #settings-content input[type="checkbox"] {
+      transform: scale(1.2);
+      margin-right: 0.5rem;
+    }
+    @media (max-width: 600px) {
+      #settings-content {
+        grid-template-columns: 1fr;
+        padding: 1rem;
+        max-width: 100%;
+      }
+      #settings-content label {
+        justify-self: start;
+        margin-right: 0;
+      }
+    }
   `;
 
   /**
@@ -561,38 +599,32 @@ export class App extends LitElement {
           >
           for more information.
         </p>
-
-        ${this.renderMainContent()}
-
-        <footer>
-          <div id="settings">
+        <details>
+          <summary>UI Settings</summary>
+          <div id="settings-content">
             <label for="rs-env">Remote Settings Environment:</label>
             <select id="rs-env" @change=${this.handleRSEnvChange}>
               <option value="prod" ?selected=${this.rsEnv === "prod"}>Prod</option>
               <option value="stage" ?selected=${this.rsEnv === "stage"}>Stage</option>
               <option value="dev" ?selected=${this.rsEnv === "dev"}>Dev</option>
             </select>
-            <br />
-            <div id="firefox-version-picker">
-              <label for="fx-version">Firefox Version:</label>
-              <select
-                id="fx-version"
-                @change=${this.handleFirefoxVersionFilterChange}
-                ?disabled=${!this.firefoxVersions}
+            <label for="fx-version">Firefox Version:</label>
+            <select
+              id="fx-version"
+              @change=${this.handleFirefoxVersionFilterChange}
+              ?disabled=${!this.firefoxVersions}
+            >
+              <option value="" ?selected=${this.filterFirefoxChannel === null}>All</option>
+              <option value="nightly" ?selected=${this.filterFirefoxChannel === "nightly"}
+                >Nightly ${this.firefoxVersions?.nightly}</option
               >
-                <option value="" ?selected=${this.filterFirefoxChannel === null}>All</option>
-                <option value="nightly" ?selected=${this.filterFirefoxChannel === "nightly"}
-                  >Nightly ${this.firefoxVersions?.nightly}</option
-                >
-                <option value="beta" ?selected=${this.filterFirefoxChannel === "beta"}
-                  >Beta ${this.firefoxVersions?.beta}</option
-                >
-                <option value="release" ?selected=${this.filterFirefoxChannel === "release"}
-                  >Release ${this.firefoxVersions?.release}</option
-                >
-              </select>
-            </div>
-            <br />
+              <option value="beta" ?selected=${this.filterFirefoxChannel === "beta"}
+                >Beta ${this.firefoxVersions?.beta}</option
+              >
+              <option value="release" ?selected=${this.filterFirefoxChannel === "release"}
+                >Release ${this.firefoxVersions?.release}</option
+              >
+            </select>
             <label for="rs-env-preview">Include changes pending review:</label>
             <input
               id="rs-env-preview"
@@ -601,7 +633,11 @@ export class App extends LitElement {
               @change=${this.handleRSEnvChange}
             />
           </div>
+        </details>
 
+        ${this.renderMainContent()}
+
+        <footer>
           <p>
             Data source:
             ${(() => {
