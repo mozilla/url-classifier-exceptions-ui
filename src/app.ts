@@ -4,56 +4,17 @@
 
 import { LitElement, html, css } from "lit";
 import { customElement, state } from "lit/decorators.js";
-import { ExceptionListEntry, BugMetaMap } from "./types";
+import { ExceptionListEntry, BugMetaMap, FirefoxChannel, FirefoxVersions } from "./types";
 import { getRSEndpoint, RSEnvironment, isRSEnvValid } from "../scripts/rs-config.js";
 import "./exceptions-table/exceptions-table";
 import "./exceptions-table/top-exceptions-table";
 import "./github-corner";
+import "./settings-ui.js";
 
 import { versionNumberMatchesFilterExpression } from "./filter-expression/filter-expression.js";
+import settings from "./settings.js";
 
 const GITHUB_URL = "https://github.com/mozilla/url-classifier-exceptions-ui";
-
-// Query parameter which can be used to override the RS environment.
-const QUERY_PARAM_RS_ENV = "rs_env";
-const QUERY_PARAM_RS_USE_PREVIEW = "rs_preview";
-
-/**
- * Get the RS environment from URL parameters, falling back to the defaults if
- * not specified.
- * @returns The RS environment key
- */
-function getRsEnv(): { env: RSEnvironment; usePreview: boolean } {
-  // Check if the environment is specified in the URL.
-  const params = new URLSearchParams(window.location.search);
-  const env = params.get(QUERY_PARAM_RS_ENV);
-  const usePreview = params.get(QUERY_PARAM_RS_USE_PREVIEW) === "true";
-  if (isRSEnvValid(env)) {
-    return { env: env as RSEnvironment, usePreview };
-  }
-
-  // Fall back to build-time environment variable.
-  let viteEnv = import.meta.env.VITE_RS_ENVIRONMENT;
-  if (isRSEnvValid(viteEnv)) {
-    return { env: viteEnv as RSEnvironment, usePreview: false };
-  }
-
-  // Otherwise default to prod, non preview.
-  return { env: "prod", usePreview: false };
-}
-
-/**
- * Get the URL for the records endpoint for a given Remote Settings environment.
- * @param rsUrl The URL of the Remote Settings environment.
- * @returns The URL for the records endpoint.
- */
-function getRecordsUrl(rsUrl: string): string {
-  // Allow ENV to override the URL for testing.
-  if (import.meta.env.VITE_RS_RECORDS_URL) {
-    return import.meta.env.VITE_RS_RECORDS_URL;
-  }
-  return rsUrl;
-}
 
 /**
  * Fetch the records from the Remote Settings environment.
@@ -61,7 +22,7 @@ function getRecordsUrl(rsUrl: string): string {
  * @returns The records.
  */
 async function fetchRecords(rsUrl: string): Promise<ExceptionListEntry[]> {
-  const response = await fetch(getRecordsUrl(rsUrl));
+  const response = await fetch(settings.getRecordsUrl(rsUrl));
   if (!response.ok) {
     throw new Error(`Failed to fetch records: ${response.statusText}`);
   }
@@ -126,11 +87,7 @@ async function fetchBugMetadata(bugIds: Set<string>): Promise<BugMetaMap> {
  * Fetch the versions for each Firefox release channel.
  * @returns The versions for each release channel.
  */
-async function fetchVersionsPerChannel(): Promise<{
-  nightly: string;
-  beta: string;
-  release: string;
-}> {
+async function fetchVersionsPerChannel(): Promise<FirefoxVersions> {
   let [nightly, beta, release] = await Promise.all([
     fetchVersionNumber("nightly"),
     fetchVersionNumber("beta"),
@@ -191,16 +148,15 @@ export class App extends LitElement {
   @state()
   error: string | null = null;
 
-  // Holds the version numbers for each Firefox release channel.
+  // Holds the version numbers for each Firefox release channel. This
+  // information is fetched via API on init.
   @state()
-  firefoxVersions: {
-    nightly: string;
-    beta: string;
-    release: string;
-  } | null = null;
+  firefoxVersions: FirefoxVersions | null = null;
 
+  // The selected Firefox channel to filter entries by. If set to null, entries
+  // matching all Firefox versions are displayed.
   @state()
-  filterFirefoxChannel: "nightly" | "beta" | "release" | null = null;
+  filterFirefoxChannel: FirefoxChannel | null = null;
 
   static styles = css`
     /* Sticky headings. */
@@ -240,44 +196,6 @@ export class App extends LitElement {
       font-size: 0.8rem;
       color: var(--text-secondary);
     }
-
-    /* Settings section */
-    #settings-content {
-      padding: 1.5rem 2rem;
-      background: var(--bg-secondary, #232323);
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-      display: grid;
-      grid-template-columns: max-content 1fr;
-      gap: 1rem 1.5rem;
-      align-items: center;
-      max-width: 480px;
-    }
-    #settings-content label {
-      justify-self: end;
-      margin-right: 0.5rem;
-      font-weight: 500;
-    }
-    #settings-content select,
-    #settings-content input[type="checkbox"] {
-      margin-left: 0.5rem;
-      font-size: 1rem;
-    }
-    #settings-content input[type="checkbox"] {
-      transform: scale(1.2);
-      margin-right: 0.5rem;
-    }
-    @media (max-width: 600px) {
-      #settings-content {
-        grid-template-columns: 1fr;
-        padding: 1rem;
-        max-width: 100%;
-      }
-      #settings-content label {
-        justify-self: start;
-        margin-right: 0;
-      }
-    }
   `;
 
   /**
@@ -287,9 +205,10 @@ export class App extends LitElement {
     super.connectedCallback();
 
     // Set the initial RS environment and preview setting.
-    let { env, usePreview } = getRsEnv();
+    let { env, usePreview } = settings.getRsEnv();
     this.rsEnv = env;
     this.rsEnvUsePreview = usePreview;
+    this.filterFirefoxChannel = settings.getFirefoxChannelFilter();
 
     this.init();
   }
@@ -303,11 +222,10 @@ export class App extends LitElement {
 
       await this.updateVersionInfo();
 
-      // If we successfully fetched the version info, set the default filter to
-      // the latest release channel. We need to do this before calling
-      // this.updateRecords so that the initial display is correctly filtered.
-      if (this.firefoxVersions) {
-        this.filterFirefoxChannel = "release";
+      // If we failed to fetch version info, disable the filter.
+      // Version info is required to evaluate the RS filter expression.
+      if (!this.firefoxVersions) {
+        this.filterFirefoxChannel = null;
       }
 
       // Fetch the records.
@@ -328,7 +246,6 @@ export class App extends LitElement {
     // Fetch the versions for each release channel.
     try {
       this.firefoxVersions = await fetchVersionsPerChannel();
-      console.debug("versions", this.firefoxVersions);
     } catch (error) {
       console.error("Failed to fetch Firefox versions", error);
     }
@@ -413,25 +330,14 @@ export class App extends LitElement {
   }
 
   /**
-   * Handle changes to RS environment settings via the UI.
-   * @param event The change event either the dropdown or the checkbox.
+   * Handle changes to RS environment settings via the settings component.
+   * @param event The RS environment change event.
    */
-  private async handleRSEnvChange(event: Event) {
-    const target = event.target as HTMLSelectElement | HTMLInputElement;
+  private async handleRSEnvChange(event: CustomEvent) {
+    this.rsEnv = event.detail.rsEnv;
+    this.rsEnvUsePreview = event.detail.rsEnvUsePreview;
 
-    if (target.id === "rs-env") {
-      this.rsEnv = (target as HTMLSelectElement).value as RSEnvironment;
-      // Reset preview setting when environment changes.
-      this.rsEnvUsePreview = false;
-    } else if (target.id === "rs-env-preview") {
-      this.rsEnvUsePreview = (target as HTMLInputElement).checked;
-    }
-
-    // Update URL parameters to reflect current settings
-    const url = new URL(window.location.href);
-    url.searchParams.set(QUERY_PARAM_RS_ENV, this.rsEnv);
-    url.searchParams.set(QUERY_PARAM_RS_USE_PREVIEW, this.rsEnvUsePreview.toString());
-    window.history.pushState({}, "", url);
+    settings.setRsEnv(this.rsEnv, this.rsEnvUsePreview);
 
     // Fetch the records again with the new settings
     try {
@@ -448,13 +354,12 @@ export class App extends LitElement {
   }
 
   /**
-   * Handle changes to the Firefox version filter via the UI.
-   * @param event The change event.
+   * Handle changes to the Firefox channel filter via the settings component.
+   * @param event The Firefox channel filter change event.
    */
-  private async handleFirefoxVersionFilterChange(event: Event) {
-    const target = event.target as HTMLSelectElement;
-
-    this.filterFirefoxChannel = target.value as keyof typeof this.firefoxVersions;
+  private async handleFirefoxChannelFilterChange(event: CustomEvent) {
+    this.filterFirefoxChannel = event.detail.filterFirefoxChannel;
+    settings.setFirefoxChannelFilter(this.filterFirefoxChannel);
 
     // Update the filtered records based on the selected Firefox version.
     // This does not require a full re-fetch of the records.
@@ -599,41 +504,14 @@ export class App extends LitElement {
           >
           for more information.
         </p>
-        <details>
-          <summary>UI Settings</summary>
-          <div id="settings-content">
-            <label for="rs-env">Remote Settings Environment:</label>
-            <select id="rs-env" @change=${this.handleRSEnvChange}>
-              <option value="prod" ?selected=${this.rsEnv === "prod"}>Prod</option>
-              <option value="stage" ?selected=${this.rsEnv === "stage"}>Stage</option>
-              <option value="dev" ?selected=${this.rsEnv === "dev"}>Dev</option>
-            </select>
-            <label for="fx-version">Firefox Version:</label>
-            <select
-              id="fx-version"
-              @change=${this.handleFirefoxVersionFilterChange}
-              ?disabled=${!this.firefoxVersions}
-            >
-              <option value="" ?selected=${this.filterFirefoxChannel === null}>All</option>
-              <option value="nightly" ?selected=${this.filterFirefoxChannel === "nightly"}
-                >Nightly ${this.firefoxVersions?.nightly}</option
-              >
-              <option value="beta" ?selected=${this.filterFirefoxChannel === "beta"}
-                >Beta ${this.firefoxVersions?.beta}</option
-              >
-              <option value="release" ?selected=${this.filterFirefoxChannel === "release"}
-                >Release ${this.firefoxVersions?.release}</option
-              >
-            </select>
-            <label for="rs-env-preview">Include changes pending review:</label>
-            <input
-              id="rs-env-preview"
-              type="checkbox"
-              ?checked=${this.rsEnvUsePreview}
-              @change=${this.handleRSEnvChange}
-            />
-          </div>
-        </details>
+        <settings-ui
+          .rsEnv=${this.rsEnv}
+          .rsEnvUsePreview=${this.rsEnvUsePreview}
+          .firefoxVersions=${this.firefoxVersions}
+          .filterFirefoxChannel=${this.filterFirefoxChannel}
+          @rs-env-change=${this.handleRSEnvChange}
+          @firefox-channel-filter-change=${this.handleFirefoxChannelFilterChange}
+        ></settings-ui>
 
         ${this.renderMainContent()}
 
@@ -641,7 +519,7 @@ export class App extends LitElement {
           <p>
             Data source:
             ${(() => {
-              const recordsUrl = getRecordsUrl(
+              const recordsUrl = settings.getRecordsUrl(
                 getRSEndpoint(this.rsEnv, this.rsEnvUsePreview).toString(),
               );
               return html`<a href="${recordsUrl}">${recordsUrl}</a>`;
