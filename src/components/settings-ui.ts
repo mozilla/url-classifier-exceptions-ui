@@ -55,33 +55,44 @@ export class Settings extends LitElement {
     details summary {
       cursor: pointer;
       user-select: none;
+      color: var(--text-color);
+      font-family: var(--font-family);
     }
 
     #settings-content {
       padding: 1.5rem 2rem;
-      background: var(--bg-secondary, #232323);
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       display: grid;
       grid-template-columns: max-content 1fr;
       gap: 1rem 1.5rem;
       align-items: center;
       max-width: 480px;
     }
+
     #settings-content label {
       justify-self: end;
       margin-right: 0.5rem;
       font-weight: 500;
+      color: var(--text-color);
+      font-family: var(--font-family);
     }
-    #settings-content select,
-    #settings-content input[type="checkbox"] {
+
+    #settings-content select {
       margin-left: 0.5rem;
       font-size: 1rem;
+      border-radius: 4px;
+      padding: 0.25rem 0.5rem;
+      font-family: var(--font-family);
     }
+
     #settings-content input[type="checkbox"] {
       transform: scale(1.2);
-      margin-right: 0.5rem;
+      accent-color: var(--link-color);
     }
+
     @media (max-width: 600px) {
       #settings-content {
         grid-template-columns: 1fr;
