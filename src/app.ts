@@ -5,7 +5,7 @@
 import { LitElement, html, css } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import { ExceptionListEntry, BugMetaMap, FirefoxChannel, FirefoxVersions } from "./types";
-import { getRSEndpoint, RSEnvironment, isRSEnvValid } from "../scripts/rs-config.js";
+import { getRSEndpoint, RSEnvironment } from "../scripts/rs-config.js";
 import "./exceptions-table/exceptions-table";
 import "./exceptions-table/top-exceptions-table";
 import "./github-corner";
