@@ -399,11 +399,11 @@ export class App extends LitElement {
     }
 
     if (this.loading) {
-      return html`<div>Loading...</div>`;
+      return html`<p>Loading...</p>`;
     }
 
     if (this.displayRecords.length === 0) {
-      return html`<div>No records found.</div>`;
+      return html`<p>No records found.</p>`;
     }
     return html`
       <p>
