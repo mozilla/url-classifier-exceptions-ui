@@ -51,14 +51,6 @@ export async function versionNumberMatchesFilterExpression(
     },
   };
   const result = await evaluateFilterExpression(filterExpression, context);
-  console.debug(
-    "Evaluating filter expression",
-    filterExpression,
-    "for version",
-    version,
-    "result",
-    result,
-  );
 
   return result === true;
 }
