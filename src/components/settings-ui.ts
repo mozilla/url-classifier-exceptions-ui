@@ -168,6 +168,9 @@ export class Settings extends LitElement {
             <option value="release" ?selected=${this.filterFirefoxChannel === "release"}
               >Release (${this.firefoxVersions?.release})</option
             >
+            <option value="esr" ?selected=${this.filterFirefoxChannel === "esr"}
+              >ESR (${this.firefoxVersions?.esr})</option
+            >
           </select>
 
           <label for="rs-env">Remote Settings Environment:</label>

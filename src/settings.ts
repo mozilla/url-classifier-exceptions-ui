@@ -65,7 +65,7 @@ function setRsEnv(env: RSEnvironment, usePreview: boolean) {
 function getFirefoxChannelFilter(): FirefoxChannel {
   const params = new URLSearchParams(window.location.search);
   let firefoxChannel = params.get(QUERY_PARAM_FILTER_FIREFOX_CHANNEL);
-  if (!firefoxChannel || !["nightly", "beta", "release"].includes(firefoxChannel)) {
+  if (!firefoxChannel || !["nightly", "beta", "release", "esr"].includes(firefoxChannel)) {
     return "release";
   }
   return firefoxChannel as FirefoxChannel;
