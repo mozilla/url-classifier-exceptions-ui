@@ -52,6 +52,11 @@ export class Settings extends LitElement {
   filterFirefoxChannel: FirefoxChannel | null = null;
 
   static styles = css`
+    details summary {
+      cursor: pointer;
+      user-select: none;
+    }
+
     #settings-content {
       padding: 1.5rem 2rem;
       background: var(--bg-secondary, #232323);
