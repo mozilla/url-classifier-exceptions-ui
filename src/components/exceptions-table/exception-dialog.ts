@@ -4,7 +4,7 @@
 
 import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { ExceptionListEntry } from "../types";
+import { ExceptionListEntry } from "../../types";
 
 /**
  * Dialog for showing a raw exception entry.

@@ -6,10 +6,10 @@ import { LitElement, html, css } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import { ExceptionListEntry, BugMetaMap, FirefoxChannel, FirefoxVersions } from "./types";
 import { getRSEndpoint, RSEnvironment } from "../scripts/rs-config.js";
-import "./exceptions-table/exceptions-table";
-import "./exceptions-table/top-exceptions-table";
-import "./github-corner";
-import "./settings-ui.js";
+import "./components/exceptions-table/exceptions-table";
+import "./components/exceptions-table/top-exceptions-table";
+import "./components/github-corner.js";
+import "./components/settings-ui.js";
 
 import { versionNumberMatchesFilterExpression } from "./filter-expression/filter-expression.js";
 import settings from "./settings.js";

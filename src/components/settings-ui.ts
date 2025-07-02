@@ -4,8 +4,8 @@
 
 import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { RSEnvironment } from "../scripts/rs-config.js";
-import { FirefoxChannel, FirefoxVersions } from "./types.js";
+import { RSEnvironment } from "../../scripts/rs-config.js";
+import { FirefoxChannel, FirefoxVersions } from "../types.js";
 
 /**
  * Custom event for RS environment changes.
