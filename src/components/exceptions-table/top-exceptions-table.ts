@@ -10,7 +10,7 @@ import "../bug-label";
 import "./exception-dialog";
 import { ExceptionDialog } from "./exception-dialog";
 import tableStyles from "./table-styles.css.ts";
-import { getHostFromUrlPattern } from "./utils.ts";
+import { getHostFromUrlPattern, renderLastModified } from "./utils.ts";
 
 interface TopResource {
   host: string;
@@ -93,6 +93,15 @@ export class TopExceptionsTable extends LitElement {
       .sort((a, b) => b.topLevelSites.size - a.topLevelSites.size);
   }
 
+  /**
+   * Get the most recent last modified timestamp from a list of entries.
+   * @param entries The entries to get the most recent last modified timestamp from.
+   * @returns The most recent last modified timestamp.
+   */
+  private getMostRecentLastModified(entries: ExceptionListEntry[]): number {
+    return Math.max(...entries.map((entry) => entry.last_modified));
+  }
+
   private renderTable() {
     return html`
       <div class="table-container">
@@ -102,6 +111,7 @@ export class TopExceptionsTable extends LitElement {
               <th class="compact-col">Bugs</th>
               <th class="compact-col"># Sites</th>
               <th>Resource</th>
+              <th>Last Modified</th>
               <th>Detail</th>
             </tr>
           </thead>
@@ -118,6 +128,11 @@ export class TopExceptionsTable extends LitElement {
                   </td>
                   <td class="compact-col">${topResource.topLevelSites.size}</td>
                   <td>${topResource.host}</td>
+                  <td
+                    >${renderLastModified(
+                      this.getMostRecentLastModified(Array.from(topResource.entries)),
+                    )}</td
+                  >
                   <td>
                     <button
                       @click=${() => this.onDetailClick(Array.from(topResource.entries.values()))}

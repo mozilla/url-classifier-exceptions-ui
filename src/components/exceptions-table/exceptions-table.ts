@@ -10,7 +10,7 @@ import "../bug-label";
 import "./exception-dialog";
 import { ExceptionDialog } from "./exception-dialog";
 import tableStyles from "./table-styles.css.ts";
-import { capitalizeFirstChar, renderUrlPattern } from "./utils.ts";
+import { capitalizeFirstChar, renderLastModified, renderUrlPattern } from "./utils.ts";
 
 /**
  * A table component for displaying exception list entries.
@@ -123,6 +123,7 @@ export class ExceptionsTable extends LitElement {
               <th>Resource</th>
               <th>Classifier Features</th>
               <th>Filters</th>
+              <th>Last Modified</th>
               <th>Detail</th>
             </tr>
           </thead>
@@ -151,6 +152,7 @@ export class ExceptionsTable extends LitElement {
                     </span>
                   </td>
                   <td> ${this.renderFilters(entry)} </td>
+                  <td> ${renderLastModified(entry.last_modified)} </td>
                   <td>
                     <button @click=${() => this.onDetailClick(entry)}>{ }</button>
                   </td>

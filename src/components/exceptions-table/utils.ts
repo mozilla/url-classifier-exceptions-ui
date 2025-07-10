@@ -3,6 +3,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 import { html } from "lit";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+
+// Extend dayjs with relative time plugin. This is used for the last modified
+// column in the exceptions tables.
+dayjs.extend(relativeTime);
 
 // Common utilities for the exceptions table elements.
 
@@ -50,4 +56,17 @@ export function renderUrlPattern(urlPattern?: string) {
   }
 
   return html`<span title=${urlPattern}>${host}</span>`;
+}
+
+/**
+ * Renders the last modified date for an entry. Shows a relative time label
+ * and the absolute date on hover.
+ * @param lastModified The last modified timestamp to render. Epoch time in
+ * milliseconds.
+ * @returns The rendered last modified date.
+ */
+export function renderLastModified(lastModified: number) {
+  const dateObj = dayjs(lastModified);
+  const absoluteDate = dateObj.toDate().toLocaleString();
+  return html`<span title="${absoluteDate}">${dateObj.fromNow()}</span>`;
 }
