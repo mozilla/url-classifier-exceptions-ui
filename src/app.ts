@@ -477,7 +477,7 @@ export class App extends LitElement {
   render() {
     return html`
       <div class="container">
-        <h1>URL Classifier Exceptions</h1>
+        <h1>Firefox ETP Exceptions</h1>
         <p>
           This dashboard lists all exceptions for Firefox's (list based) Enhanced Tracking
           Protection (ETP). Exceptions may be applied when websites break due to tracker blocking.
