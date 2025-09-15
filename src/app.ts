@@ -482,14 +482,14 @@ export class App extends LitElement {
           This dashboard lists all exceptions for Firefox's (list based) Enhanced Tracking
           Protection (ETP). Exceptions may be applied when websites break due to tracker blocking.
           This ensures Firefox can protect the privacy of users while still keeping websites
-          working. See
+          working.
           <a
-            href="https://wiki.mozilla.org/Security/Anti_tracking_policy#Policy_Exceptions"
+            href="https://support.mozilla.org/en-US/kb/manage-enhanced-tracking-protection-exceptions"
             target="_blank"
             rel="noopener noreferrer"
-            >our anti-tracking policy</a
           >
-          for more information.
+            Learn more
+          </a>
         </p>
         <settings-ui
           .rsEnv=${this.rsEnv}
