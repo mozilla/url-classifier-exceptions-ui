@@ -188,6 +188,29 @@ export class App extends LitElement {
       font-size: 0.8rem;
       color: var(--text-secondary);
     }
+
+    .bug-search {
+      margin: 1.5rem 0;
+      max-width: 320px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .bug-search label {
+      font-weight: 600;
+      color: var(--text-color);
+    }
+
+    .bug-search input {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      font-size: 1rem;
+      font-family: var(--font-family);
+      color: var(--text-color);
+      background: var(--bg-color);
+    }
   `;
 
   /**
@@ -355,11 +378,31 @@ export class App extends LitElement {
   private async handleFilterChange(event: CustomEvent) {
     this.filterFirefoxChannel = event.detail.filterFirefoxChannel;
     settings.setFilter(this.filterFirefoxChannel, this.filterBugId);
-    this.filterBugId = event.detail.filterBugId;
-    settings.setFirefoxBugIdFilter(this.filterBugId);
 
     // Update the filtered records based on the selected Firefox version.
     // This does not require a full re-fetch of the records.
+    await this.updateFilteredRecords();
+  }
+
+  /**
+   * Update the bugId filter when the search field changes.
+   * @param event The search input event.
+   */
+  private async handleBugIdSearch(event: Event) {
+    const target = event.target as HTMLInputElement;
+    const value = target.value.trim();
+
+    let bugId: number | null = null;
+    if (value !== "") {
+      if (!/^\d+$/.test(value)) {
+        return;
+      }
+      bugId = Number.parseInt(value, 10);
+    }
+
+    this.filterBugId = bugId;
+    settings.setFilter(this.filterFirefoxChannel, this.filterBugId);
+
     await this.updateFilteredRecords();
   }
 
@@ -501,12 +544,23 @@ export class App extends LitElement {
             Learn more
           </a>
         </p>
+        <div class="bug-search">
+          <label for="bug-id-search">Filter by Bug ID</label>
+          <input
+            id="bug-id-search"
+            type="search"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            placeholder="Search for a Bugzilla ID"
+            .value=${this.filterBugId?.toString() ?? ""}
+            @input=${this.handleBugIdSearch}
+          />
+        </div>
         <settings-ui
           .rsEnv=${this.rsEnv}
           .rsEnvUsePreview=${this.rsEnvUsePreview}
           .firefoxVersions=${this.firefoxVersions}
           .filterFirefoxChannel=${this.filterFirefoxChannel}
-          .filterBugId=${this.filterBugId}
           @rs-env-change=${this.handleRSEnvChange}
           @filter-change=${this.handleFilterChange}
         ></settings-ui>
