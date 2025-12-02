@@ -20,13 +20,14 @@ export class RSEnvChangeEvent extends CustomEvent<{
 }
 
 /**
- * Custom event for Firefox channel filter changes.
+ * Custom event for bugId and Firefox channel filter changes.
  */
-export class FirefoxChannelFilterChangeEvent extends CustomEvent<{
+export class FilterChangeEvent extends CustomEvent<{
   filterFirefoxChannel: FirefoxChannel | null;
+  filterBugId: number | null;
 }> {
-  constructor(detail: { filterFirefoxChannel: FirefoxChannel | null }) {
-    super("firefox-channel-filter-change", { detail, bubbles: true, composed: true });
+  constructor(detail: { filterFirefoxChannel: FirefoxChannel | null; filterBugId: number | null }) {
+    super("filter-change", { detail, bubbles: true, composed: true });
   }
 }
 
@@ -50,6 +51,10 @@ export class Settings extends LitElement {
   // The currently selected Firefox version filter.
   @property({ type: String, attribute: false })
   filterFirefoxChannel: FirefoxChannel | null = null;
+
+  // The currently selected bug id filter.
+  @property({ type: String, attribute: false })
+  filterBugId: number | null = null;
 
   static styles = css`
     details summary {
@@ -130,21 +135,40 @@ export class Settings extends LitElement {
     );
   }
 
+  private dispatchFilterChange() {
+    // Emit the change event
+    this.dispatchEvent(
+      new FilterChangeEvent({
+        filterFirefoxChannel: this.filterFirefoxChannel,
+        filterBugId: this.filterBugId,
+      }),
+    );
+  }
+
   /**
    * Handle changes to the Firefox version filter via the UI.
    * @param event The change event.
    */
   private handleFirefoxChannelFilterChange(event: Event) {
     const target = event.target as HTMLSelectElement;
-
     this.filterFirefoxChannel = target.value as FirefoxChannel;
+    this.dispatchFilterChange();
+  }
 
-    // Emit the change event
-    this.dispatchEvent(
-      new FirefoxChannelFilterChangeEvent({
-        filterFirefoxChannel: this.filterFirefoxChannel,
-      }),
-    );
+  /**
+   * Handle changes to the Firefox version filter via the UI.
+   * @param event The change event.
+   */
+  private handleBugIdFilterChange(event: Event) {
+    const target = event.target as HTMLSelectElement;
+    let bugId = Number.parseInt(target.value, 10);
+    if (target.value === "") {
+      this.filterBugId = null;
+      this.dispatchFilterChange();
+    } else if (Number.isInteger(bugId)) {
+      this.filterBugId = bugId;
+      this.dispatchFilterChange();
+    }
   }
 
   render() {
@@ -172,6 +196,12 @@ export class Settings extends LitElement {
               >ESR (${this.firefoxVersions?.esr})</option
             >
           </select>
+          <label for="bug-id">Bug Id</label>
+          <input
+              id="bug-id"
+              type="number"
+              @change=${this.handleBugIdFilterChange}
+          ></input>
 
           <label for="rs-env">Remote Settings Environment:</label>
           <select id="rs-env" @change=${this.handleRSEnvChange}>

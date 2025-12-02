@@ -145,6 +145,11 @@ export class App extends LitElement {
   @state()
   filterFirefoxChannel: FirefoxChannel | null = null;
 
+  // The selected Bug Id to filter entries by. If set to null, entry with any
+  // bug_id are displayed.
+  @state()
+  filterBugId: number | null = null;
+
   static styles = css`
     /* Sticky headings. */
     h2 {
@@ -196,6 +201,7 @@ export class App extends LitElement {
     this.rsEnv = env;
     this.rsEnvUsePreview = usePreview;
     this.filterFirefoxChannel = settings.getFirefoxChannelFilter();
+    this.filterBugId = settings.getBugIdFilter();
 
     this.init();
   }
@@ -274,14 +280,13 @@ export class App extends LitElement {
    */
   private async updateFilteredRecords() {
     // If no Firefox version is selected, show all records.
-    if (!this.filterFirefoxChannel || !this.firefoxVersions) {
-      this.displayRecords = this.records;
-      return;
+    let targetVersion = null;
+    if (this.filterFirefoxChannel !== null && this.firefoxVersions !== null) {
+      targetVersion = this.firefoxVersions[this.filterFirefoxChannel];
     }
 
     // Get the records that match the selected Firefox version.
-    const targetVersion = this.firefoxVersions[this.filterFirefoxChannel];
-    this.displayRecords = await this.getRecordsMatchingFirefoxVersion(targetVersion);
+    this.displayRecords = await this.getRecordsMatchingFilter(targetVersion, this.filterBugId);
   }
 
   /**
@@ -298,22 +303,25 @@ export class App extends LitElement {
    * @param firefoxVersion The Firefox version to match.
    * @returns The records that match the given Firefox version.
    */
-  private async getRecordsMatchingFirefoxVersion(
-    firefoxVersion: string,
+  private async getRecordsMatchingFilter(
+    firefoxVersion: string | null,
+    bugId: number | null,
   ): Promise<ExceptionListEntry[]> {
-    let filteredRecords = await Promise.all(
-      this.records.map(async (record) => {
-        let matches = await versionNumberMatchesFilterExpression(
-          firefoxVersion,
-          record.filter_expression,
-        );
-        if (matches) {
-          return record;
-        }
-        return null;
-      }),
-    );
-    return filteredRecords.filter((record) => record !== null);
+    let filteredRecords = this.records;
+    if (bugId !== null) {
+      filteredRecords = filteredRecords.filter((record) =>
+        record.bugIds.includes(bugId.toString()),
+      );
+    }
+    if (firefoxVersion !== null) {
+      let keepRecords = await Promise.all(
+        this.records.map(async (record) => {
+          return versionNumberMatchesFilterExpression(firefoxVersion, record.filter_expression);
+        }),
+      );
+      filteredRecords = filteredRecords.filter((_, i) => keepRecords[i]);
+    }
+    return Promise.resolve(filteredRecords);
   }
 
   /**
@@ -341,12 +349,14 @@ export class App extends LitElement {
   }
 
   /**
-   * Handle changes to the Firefox channel filter via the settings component.
+   * Handle changes filters including Firefox channel and bugId via the settings component.
    * @param event The Firefox channel filter change event.
    */
-  private async handleFirefoxChannelFilterChange(event: CustomEvent) {
+  private async handleFilterChange(event: CustomEvent) {
     this.filterFirefoxChannel = event.detail.filterFirefoxChannel;
-    settings.setFirefoxChannelFilter(this.filterFirefoxChannel);
+    settings.setFilter(this.filterFirefoxChannel, this.filterBugId);
+    this.filterBugId = event.detail.filterBugId;
+    settings.setFirefoxBugIdFilter(this.filterBugId);
 
     // Update the filtered records based on the selected Firefox version.
     // This does not require a full re-fetch of the records.
@@ -496,8 +506,9 @@ export class App extends LitElement {
           .rsEnvUsePreview=${this.rsEnvUsePreview}
           .firefoxVersions=${this.firefoxVersions}
           .filterFirefoxChannel=${this.filterFirefoxChannel}
+          .filterBugId=${this.filterBugId}
           @rs-env-change=${this.handleRSEnvChange}
-          @firefox-channel-filter-change=${this.handleFirefoxChannelFilterChange}
+          @filter-change=${this.handleFilterChange}
         ></settings-ui>
 
         ${this.renderMainContent()}
