@@ -448,7 +448,10 @@ export class App extends LitElement {
     return html`
       <p>
         ${this.filterBugId !== null
-          ? html`Showing ${this.displayRecords.length} exceptions referencing <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=${this.filterBugId}">bug ${this.filterBugId}</a>.`
+          ? html`Showing ${this.displayRecords.length} exceptions referencing
+              <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=${this.filterBugId}"
+                >bug ${this.filterBugId}</a
+              >.`
           : html`There are currently a total of ${this.displayRecords.length} exceptions on record.`}
         ${this.displayRecords.filter((e) => !e.topLevelUrlPattern?.length).length}
         <a href="#global-exceptions" @click=${this.handleAnchorNavigation}>global exceptions</a> and
