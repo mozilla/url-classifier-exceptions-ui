@@ -150,6 +150,11 @@ export class App extends LitElement {
   @state()
   filterBugId: number | null = null;
 
+  // Current value of the bug search input. Stored separately so the clear button
+  // can reset the field even when its value is invalid.
+  @state()
+  bugSearchValue: string = "";
+
   static styles = css`
     /* Sticky headings. */
     h2 {
@@ -202,6 +207,12 @@ export class App extends LitElement {
       color: var(--text-color);
     }
 
+    .bug-search-controls {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
     .bug-search input {
       padding: 0.5rem 0.75rem;
       border: 1px solid var(--border-color);
@@ -210,6 +221,23 @@ export class App extends LitElement {
       font-family: var(--font-family);
       color: var(--text-color);
       background: var(--bg-color);
+      flex: 1;
+    }
+
+    .bug-search button {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      background: var(--bg-color);
+      color: var(--text-color);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .bug-search button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
   `;
 
@@ -225,6 +253,7 @@ export class App extends LitElement {
     this.rsEnvUsePreview = usePreview;
     this.filterFirefoxChannel = settings.getFirefoxChannelFilter();
     this.filterBugId = settings.getBugIdFilter();
+    this.bugSearchValue = this.filterBugId?.toString() ?? "";
 
     this.init();
   }
@@ -391,6 +420,7 @@ export class App extends LitElement {
   private async handleBugIdSearch(event: Event) {
     const target = event.target as HTMLInputElement;
     const value = target.value.trim();
+    this.bugSearchValue = value;
 
     let bugId: number | null = null;
     if (value !== "") {
@@ -404,6 +434,24 @@ export class App extends LitElement {
     settings.setFilter(this.filterFirefoxChannel, this.filterBugId);
 
     await this.updateFilteredRecords();
+  }
+
+  private async handleBugSearchClear() {
+    if (this.bugSearchValue === "") {
+      return;
+    }
+
+    const input = this.renderRoot?.querySelector<HTMLInputElement>("#bug-id-search");
+    this.bugSearchValue = "";
+    const hadBugFilter = this.filterBugId !== null;
+    this.filterBugId = null;
+    settings.setFilter(this.filterFirefoxChannel, this.filterBugId);
+
+    if (hadBugFilter) {
+      await this.updateFilteredRecords();
+    }
+
+    input?.focus();
   }
 
   /**
@@ -551,15 +599,20 @@ export class App extends LitElement {
         </p>
         <div class="bug-search">
           <label for="bug-id-search">Filter by Bug ID</label>
-          <input
-            id="bug-id-search"
-            type="search"
-            inputmode="numeric"
-            pattern="[0-9]*"
-            placeholder="Search for a Bugzilla ID"
-            .value=${this.filterBugId?.toString() ?? ""}
-            @input=${this.handleBugIdSearch}
-          />
+          <div class="bug-search-controls">
+            <input
+              id="bug-id-search"
+              type="search"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              placeholder="Search for a Bugzilla ID"
+              .value=${this.bugSearchValue}
+              @input=${this.handleBugIdSearch}
+            />
+            <button type="button" @click=${this.handleBugSearchClear} ?disabled=${this.bugSearchValue === ""}>
+              Clear
+            </button>
+          </div>
         </div>
         <settings-ui
           .rsEnv=${this.rsEnv}
