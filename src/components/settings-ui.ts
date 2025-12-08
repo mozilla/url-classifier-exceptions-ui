@@ -145,7 +145,8 @@ export class Settings extends LitElement {
    */
   private handleFirefoxChannelFilterChange(event: Event) {
     const target = event.target as HTMLSelectElement;
-    this.filterFirefoxChannel = target.value as FirefoxChannel;
+    const value = target.value;
+    this.filterFirefoxChannel = value === "" ? null : (value as FirefoxChannel);
     this.dispatchFilterChange();
   }
 
