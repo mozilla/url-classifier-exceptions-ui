@@ -361,7 +361,7 @@ export class App extends LitElement {
     }
     if (firefoxVersion !== null) {
       let keepRecords = await Promise.all(
-        this.records.map(async (record) => {
+        filteredRecords.map(async (record) => {
           return versionNumberMatchesFilterExpression(firefoxVersion, record.filter_expression);
         }),
       );
