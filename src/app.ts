@@ -3,7 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 import { LitElement, html, css } from "lit";
-import { customElement, state } from "lit/decorators.js";
+import { customElement, state, query } from "lit/decorators.js";
 import { ExceptionListEntry, BugMetaMap, FirefoxChannel, FirefoxVersions } from "./types";
 import { getRSEndpoint, RSEnvironment } from "../scripts/rs-config.js";
 import "./components/exceptions-table/exceptions-table";
@@ -145,10 +145,13 @@ export class App extends LitElement {
   @state()
   filterFirefoxChannel: FirefoxChannel | null = null;
 
+  @query("#bug-id-search")
+  bugIdInput!: HTMLInputElement;
+
   // The selected Bug Id to filter entries by. If set to null, entry with any
   // bug_id are displayed.
   @state()
-  filterBugId: number | null = null;
+  filterBugId: string | null = null;
 
   static styles = css`
     /* Sticky headings. */
@@ -228,11 +231,6 @@ export class App extends LitElement {
       font-size: 0.9rem;
       font-weight: 600;
       cursor: pointer;
-    }
-
-    .bug-search button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
     }
   `;
 
@@ -327,7 +325,7 @@ export class App extends LitElement {
   private async updateFilteredRecords() {
     // If no Firefox version is selected, show all records.
     let targetVersion = null;
-    if (this.filterFirefoxChannel !== null && this.firefoxVersions !== null) {
+    if (this.filterFirefoxChannel != null && this.firefoxVersions != null) {
       targetVersion = this.firefoxVersions[this.filterFirefoxChannel];
     }
 
@@ -351,23 +349,21 @@ export class App extends LitElement {
    */
   private async getRecordsMatchingFilter(
     firefoxVersion: string | null,
-    bugId: number | null,
+    bugId: string | null,
   ): Promise<ExceptionListEntry[]> {
     let filteredRecords = this.records;
     if (bugId !== null) {
-      filteredRecords = filteredRecords.filter((record) =>
-        record.bugIds.includes(bugId.toString()),
-      );
+      filteredRecords = filteredRecords.filter((record) => record.bugIds.includes(bugId));
     }
-    if (firefoxVersion !== null) {
+    if (firefoxVersion != null) {
       let keepRecords = await Promise.all(
-        filteredRecords.map(async (record) => {
+        filteredRecords.map((record) => {
           return versionNumberMatchesFilterExpression(firefoxVersion, record.filter_expression);
         }),
       );
       filteredRecords = filteredRecords.filter((_, i) => keepRecords[i]);
     }
-    return Promise.resolve(filteredRecords);
+    return filteredRecords;
   }
 
   /**
@@ -411,18 +407,15 @@ export class App extends LitElement {
    * Apply the bugId filter when the user submits the search.
    * @param event The submit event.
    */
-  private async handleBugIdSearch(event: Event) {
-    event.preventDefault();
-    const input = this.renderRoot?.querySelector<HTMLInputElement>("#bug-id-search");
-    const value = input?.value.trim() ?? "";
+  private async handleBugIdSearch(event: Event | null) {
+    event?.preventDefault();
+    const value: string = this.bugIdInput.value.trim() ?? "";
 
-    let bugId: number | null = null;
-    if (value !== "") {
-      if (!/^\d+$/.test(value)) {
-        return;
-      }
-      bugId = Number.parseInt(value, 10);
+    if (!/^\d*$/.test(value)) {
+      // not empty string nor number
+      return;
     }
+    const bugId = value === "" ? null : value;
 
     if (bugId === this.filterBugId) {
       return;
@@ -434,26 +427,16 @@ export class App extends LitElement {
     await this.updateFilteredRecords();
   }
 
+  /**
+   * Clear the bug search field and focus. Update bug list if filter changed
+   */
   private async handleBugSearchClear() {
-    const input = this.renderRoot?.querySelector<HTMLInputElement>("#bug-id-search");
-    const hadInputValue = (input?.value ?? "") !== "";
-    const hadBugFilter = this.filterBugId !== null;
+    // clear the filter
+    this.bugIdInput.value = "";
+    this.bugIdInput.focus();
 
-    if (!hadInputValue && !hadBugFilter) {
-      return;
-    }
-
-    if (input) {
-      input.value = "";
-    }
-
-    if (hadBugFilter) {
-      this.filterBugId = null;
-      settings.setFilter(this.filterFirefoxChannel, this.filterBugId);
-      await this.updateFilteredRecords();
-    }
-
-    input?.focus();
+    // update filter if currently there is a filter active
+    await this.handleBugIdSearch(null);
   }
 
   /**
@@ -495,28 +478,39 @@ export class App extends LitElement {
     if (this.displayRecords.length === 0) {
       return html`<p>No records found.</p>`;
     }
-    return html`
-      <p>
-        ${this.filterBugId !== null
-          ? html`Showing ${this.displayRecords.length} exceptions referencing
-              <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=${this.filterBugId}"
-                >bug ${this.filterBugId}</a
-              >.`
-          : html`There are currently a total of ${this.displayRecords.length} exceptions on record.`}
-        ${this.displayRecords.filter((e) => !e.topLevelUrlPattern?.length).length}
-        <a href="#global-exceptions" @click=${this.handleAnchorNavigation}>global exceptions</a> and
-        ${this.displayRecords.filter((e) => e.topLevelUrlPattern?.length).length}
-        <a href="#per-site-exceptions" @click=${this.handleAnchorNavigation}>per-site exceptions</a
-        >. ${this.displayRecords.filter((e) => e.category === "baseline").length} of them are
-        baseline exceptions and
-        ${this.displayRecords.filter((e) => e.category === "convenience").length} convenience
-        exceptions.
-      </p>
-      <p>
-        Overall the exceptions resolve ${this.uniqueBugCount} known bugs. Note that global
-        exceptions resolve a lot of untracked site breakage, i.e. breakage we don't have a bug for.
-      </p>
 
+    let statsText;
+    if (this.filterBugId !== null) {
+      statsText = html`
+        <p>
+          Showing ${this.displayRecords.length} exceptions referencing
+          <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=${this.filterBugId}">
+            bug ${this.filterBugId} </a
+          >.
+        </p>
+      `;
+    } else {
+      statsText = html`
+        <p>
+          There are currently a total of ${this.displayRecords.length} exceptions on record.
+          ${this.displayRecords.filter((e) => !e.topLevelUrlPattern?.length).length}
+          <a href="#global-exceptions" @click=${this.handleAnchorNavigation}>global exceptions</a>
+          and ${this.displayRecords.filter((e) => e.topLevelUrlPattern?.length).length}
+          <a href="#per-site-exceptions" @click=${this.handleAnchorNavigation}
+            >per-site exceptions</a
+          >. ${this.displayRecords.filter((e) => e.category === "baseline").length} of them are
+          baseline exceptions and
+          ${this.displayRecords.filter((e) => e.category === "convenience").length} convenience
+          exceptions.
+        </p>
+        <p>
+          Overall the exceptions resolve ${this.uniqueBugCount} known bugs. Note that global
+          exceptions resolve a lot of untracked site breakage, i.e. breakage we don't have a bug
+          for.
+        </p>
+      `;
+    }
+    return html`${statsText}
       <section style="z-index: 10;">
         <h2 id="global-exceptions" style="z-index: 20;">Global Exceptions</h2>
         <p>
@@ -578,8 +572,7 @@ export class App extends LitElement {
           .entries=${this.displayRecords}
           .bugMeta=${this.bugMeta}
         ></top-exceptions-table>
-      </section>
-    `;
+      </section> `;
   }
 
   render() {
@@ -605,10 +598,8 @@ export class App extends LitElement {
             <input
               id="bug-id-search"
               type="search"
-              inputmode="numeric"
-              pattern="[0-9]*"
               placeholder="Search for a Bugzilla ID"
-              .value=${this.filterBugId?.toString() ?? ""}
+              .value=${this.filterBugId ?? ""}
             />
             <button type="submit">Search</button>
             <button type="button" @click=${this.handleBugSearchClear}> Clear </button>

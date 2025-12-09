@@ -20,7 +20,7 @@ export class RSEnvChangeEvent extends CustomEvent<{
 }
 
 /**
- * Custom event for bugId and Firefox channel filter changes.
+ * Custom event for filter changes.
  */
 export class FilterChangeEvent extends CustomEvent<{
   filterFirefoxChannel: FirefoxChannel | null;
@@ -130,24 +130,21 @@ export class Settings extends LitElement {
     );
   }
 
-  private dispatchFilterChange() {
-    // Emit the change event
-    this.dispatchEvent(
-      new FilterChangeEvent({
-        filterFirefoxChannel: this.filterFirefoxChannel,
-      }),
-    );
-  }
-
   /**
    * Handle changes to the Firefox version filter via the UI.
    * @param event The change event.
    */
   private handleFirefoxChannelFilterChange(event: Event) {
     const target = event.target as HTMLSelectElement;
-    const value = target.value;
-    this.filterFirefoxChannel = value === "" ? null : (value as FirefoxChannel);
-    this.dispatchFilterChange();
+
+    this.filterFirefoxChannel = target.value as FirefoxChannel;
+
+    // Emit the change event
+    this.dispatchEvent(
+      new FilterChangeEvent({
+        filterFirefoxChannel: this.filterFirefoxChannel,
+      }),
+    );
   }
 
   render() {

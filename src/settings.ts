@@ -77,14 +77,14 @@ function getFirefoxChannelFilter(): FirefoxChannel {
  * Get the Bug id filter from the URL search params.
  * @returns bug_id to filter for or null
  */
-function getBugIdFilter(): number | null {
+function getBugIdFilter(): string | null {
   const params = new URLSearchParams(window.location.search);
-  const value = params.get(QUERY_PARAM_FILTER_BUG_ID);
-  if (value === null) {
+  const bugId = params.get(QUERY_PARAM_FILTER_BUG_ID);
+  // check for non-digit strings
+  if (bugId !== null && !/^\d+$/.test(bugId)) {
     return null;
   }
-  const bug_id = parseInt(value, 10);
-  return Number.isInteger(bug_id) ? bug_id : null;
+  return bugId;
 }
 
 /**
@@ -92,18 +92,17 @@ function getBugIdFilter(): number | null {
  * @param firefoxChannel The Firefox channel filter to set.
  * @param bugId The Bug Id that gets filtered
  */
-function setFilter(firefoxChannel: FirefoxChannel | null, bugId: number | null) {
+function setFilter(firefoxChannel: FirefoxChannel | null, bugId: string | null) {
   const url = new URL(window.location.href);
   if (firefoxChannel === null) {
     url.searchParams.delete(QUERY_PARAM_FILTER_FIREFOX_CHANNEL);
   } else {
     url.searchParams.set(QUERY_PARAM_FILTER_FIREFOX_CHANNEL, firefoxChannel);
   }
-  window.history.pushState({}, "", url);
   if (bugId === null) {
     url.searchParams.delete(QUERY_PARAM_FILTER_BUG_ID);
   } else {
-    url.searchParams.set(QUERY_PARAM_FILTER_BUG_ID, bugId.toString());
+    url.searchParams.set(QUERY_PARAM_FILTER_BUG_ID, bugId);
   }
   window.history.pushState({}, "", url);
 }
