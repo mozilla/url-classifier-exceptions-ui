@@ -194,7 +194,7 @@ export class App extends LitElement {
 
     .bug-search {
       margin: 1.5rem 0;
-      max-width: 320px;
+      max-width: 400px;
       display: flex;
       flex-direction: column;
       gap: 0.4rem;
@@ -206,9 +206,16 @@ export class App extends LitElement {
     }
 
     .bug-search-controls {
-      display: flex;
+      display: grid;
+      grid-template-columns: 1fr auto;
       gap: 0.5rem;
       align-items: center;
+    }
+
+    .bug-search-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
     }
 
     .bug-search input {
@@ -219,7 +226,8 @@ export class App extends LitElement {
       font-family: var(--font-family);
       color: var(--text-color);
       background: var(--bg-color);
-      flex: 1;
+      width: 100%;
+      min-width: 0;
     }
 
     .bug-search button {
@@ -231,6 +239,17 @@ export class App extends LitElement {
       font-size: 0.9rem;
       font-weight: 600;
       cursor: pointer;
+      flex: 1 1 auto;
+    }
+
+    @media (max-width: 600px) {
+      .bug-search-controls {
+        grid-template-columns: 1fr;
+      }
+
+      .bug-search button {
+        flex: 1 1 45%;
+      }
     }
   `;
 
@@ -601,8 +620,10 @@ export class App extends LitElement {
               placeholder="Search for a Bugzilla ID"
               .value=${this.filterBugId ?? ""}
             />
-            <button type="submit">Search</button>
-            <button type="button" @click=${this.handleBugSearchClear}> Clear </button>
+            <div class="bug-search-actions">
+              <button type="submit">Search</button>
+              <button type="button" @click=${this.handleBugSearchClear}> Clear </button>
+            </div>
           </div>
         </form>
         <settings-ui
