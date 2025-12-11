@@ -20,13 +20,13 @@ export class RSEnvChangeEvent extends CustomEvent<{
 }
 
 /**
- * Custom event for Firefox channel filter changes.
+ * Custom event for filter changes.
  */
-export class FirefoxChannelFilterChangeEvent extends CustomEvent<{
+export class FilterChangeEvent extends CustomEvent<{
   filterFirefoxChannel: FirefoxChannel | null;
 }> {
   constructor(detail: { filterFirefoxChannel: FirefoxChannel | null }) {
-    super("firefox-channel-filter-change", { detail, bubbles: true, composed: true });
+    super("filter-change", { detail, bubbles: true, composed: true });
   }
 }
 
@@ -141,7 +141,7 @@ export class Settings extends LitElement {
 
     // Emit the change event
     this.dispatchEvent(
-      new FirefoxChannelFilterChangeEvent({
+      new FilterChangeEvent({
         filterFirefoxChannel: this.filterFirefoxChannel,
       }),
     );

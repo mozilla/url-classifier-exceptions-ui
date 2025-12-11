@@ -3,7 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 import { LitElement, html, css } from "lit";
-import { customElement, state } from "lit/decorators.js";
+import { customElement, state, query } from "lit/decorators.js";
 import { ExceptionListEntry, BugMetaMap, FirefoxChannel, FirefoxVersions } from "./types";
 import { getRSEndpoint, RSEnvironment } from "../scripts/rs-config.js";
 import "./components/exceptions-table/exceptions-table";
@@ -145,6 +145,14 @@ export class App extends LitElement {
   @state()
   filterFirefoxChannel: FirefoxChannel | null = null;
 
+  @query("#bug-id-search")
+  bugIdInput!: HTMLInputElement;
+
+  // The selected Bug Id to filter entries by. If set to null, entry with any
+  // bug_id are displayed.
+  @state()
+  filterBugId: string | null = null;
+
   static styles = css`
     /* Sticky headings. */
     h2 {
@@ -183,6 +191,66 @@ export class App extends LitElement {
       font-size: 0.8rem;
       color: var(--text-secondary);
     }
+
+    .bug-search {
+      margin: 1.5rem 0;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .bug-search label {
+      font-weight: 600;
+      color: var(--text-color);
+    }
+
+    .bug-search-controls {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .bug-search-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .bug-search input {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      font-size: 1rem;
+      font-family: var(--font-family);
+      color: var(--text-color);
+      background: var(--bg-color);
+      width: 100%;
+      min-width: 0;
+    }
+
+    .bug-search button {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      background: var(--bg-color);
+      color: var(--text-color);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      flex: 1 1 auto;
+    }
+
+    @media (max-width: 600px) {
+      .bug-search-controls {
+        grid-template-columns: 1fr;
+      }
+
+      .bug-search button {
+        flex: 1 1 45%;
+      }
+    }
   `;
 
   /**
@@ -196,6 +264,7 @@ export class App extends LitElement {
     this.rsEnv = env;
     this.rsEnvUsePreview = usePreview;
     this.filterFirefoxChannel = settings.getFirefoxChannelFilter();
+    this.filterBugId = settings.getBugIdFilter();
 
     this.init();
   }
@@ -274,14 +343,13 @@ export class App extends LitElement {
    */
   private async updateFilteredRecords() {
     // If no Firefox version is selected, show all records.
-    if (!this.filterFirefoxChannel || !this.firefoxVersions) {
-      this.displayRecords = this.records;
-      return;
+    let targetVersion = null;
+    if (this.filterFirefoxChannel != null && this.firefoxVersions != null) {
+      targetVersion = this.firefoxVersions[this.filterFirefoxChannel];
     }
 
     // Get the records that match the selected Firefox version.
-    const targetVersion = this.firefoxVersions[this.filterFirefoxChannel];
-    this.displayRecords = await this.getRecordsMatchingFirefoxVersion(targetVersion);
+    this.displayRecords = await this.getRecordsMatchingFilter(targetVersion, this.filterBugId);
   }
 
   /**
@@ -298,22 +366,23 @@ export class App extends LitElement {
    * @param firefoxVersion The Firefox version to match.
    * @returns The records that match the given Firefox version.
    */
-  private async getRecordsMatchingFirefoxVersion(
-    firefoxVersion: string,
+  private async getRecordsMatchingFilter(
+    firefoxVersion: string | null,
+    bugId: string | null,
   ): Promise<ExceptionListEntry[]> {
-    let filteredRecords = await Promise.all(
-      this.records.map(async (record) => {
-        let matches = await versionNumberMatchesFilterExpression(
-          firefoxVersion,
-          record.filter_expression,
-        );
-        if (matches) {
-          return record;
-        }
-        return null;
-      }),
-    );
-    return filteredRecords.filter((record) => record !== null);
+    let filteredRecords = this.records;
+    if (bugId !== null) {
+      filteredRecords = filteredRecords.filter((record) => record.bugIds.includes(bugId));
+    }
+    if (firefoxVersion != null) {
+      let keepRecords = await Promise.all(
+        filteredRecords.map((record) => {
+          return versionNumberMatchesFilterExpression(firefoxVersion, record.filter_expression);
+        }),
+      );
+      filteredRecords = filteredRecords.filter((_, i) => keepRecords[i]);
+    }
+    return filteredRecords;
   }
 
   /**
@@ -341,16 +410,52 @@ export class App extends LitElement {
   }
 
   /**
-   * Handle changes to the Firefox channel filter via the settings component.
+   * Handle changes filters including Firefox channel and bugId via the settings component.
    * @param event The Firefox channel filter change event.
    */
-  private async handleFirefoxChannelFilterChange(event: CustomEvent) {
+  private async handleFilterChange(event: CustomEvent) {
     this.filterFirefoxChannel = event.detail.filterFirefoxChannel;
-    settings.setFirefoxChannelFilter(this.filterFirefoxChannel);
+    settings.setFilter(this.filterFirefoxChannel, this.filterBugId);
 
     // Update the filtered records based on the selected Firefox version.
     // This does not require a full re-fetch of the records.
     await this.updateFilteredRecords();
+  }
+
+  /**
+   * Apply the bugId filter when the user submits the search.
+   * @param event The submit event.
+   */
+  private async handleBugIdSearch(event: Event | null) {
+    event?.preventDefault();
+    const value: string = this.bugIdInput.value.trim() ?? "";
+
+    if (!/^\d*$/.test(value)) {
+      // not empty string nor number
+      return;
+    }
+    const bugId = value === "" ? null : value;
+
+    if (bugId === this.filterBugId) {
+      return;
+    }
+
+    this.filterBugId = bugId;
+    settings.setFilter(this.filterFirefoxChannel, this.filterBugId);
+
+    await this.updateFilteredRecords();
+  }
+
+  /**
+   * Clear the bug search field and focus. Update bug list if filter changed
+   */
+  private async handleBugSearchClear() {
+    // clear the filter
+    this.bugIdInput.value = "";
+    this.bugIdInput.focus();
+
+    // update filter if currently there is a filter active
+    await this.handleBugIdSearch(null);
   }
 
   /**
@@ -392,23 +497,39 @@ export class App extends LitElement {
     if (this.displayRecords.length === 0) {
       return html`<p>No records found.</p>`;
     }
-    return html`
-      <p>
-        There are currently a total of ${this.displayRecords.length} exceptions on record.
-        ${this.displayRecords.filter((e) => !e.topLevelUrlPattern?.length).length}
-        <a href="#global-exceptions" @click=${this.handleAnchorNavigation}>global exceptions</a> and
-        ${this.displayRecords.filter((e) => e.topLevelUrlPattern?.length).length}
-        <a href="#per-site-exceptions" @click=${this.handleAnchorNavigation}>per-site exceptions</a
-        >. ${this.displayRecords.filter((e) => e.category === "baseline").length} of them are
-        baseline exceptions and
-        ${this.displayRecords.filter((e) => e.category === "convenience").length} convenience
-        exceptions.
-      </p>
-      <p>
-        Overall the exceptions resolve ${this.uniqueBugCount} known bugs. Note that global
-        exceptions resolve a lot of untracked site breakage, i.e. breakage we don't have a bug for.
-      </p>
 
+    let statsText;
+    if (this.filterBugId !== null) {
+      statsText = html`
+        <p>
+          Showing ${this.displayRecords.length} exceptions referencing
+          <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=${this.filterBugId}">
+            bug ${this.filterBugId}</a
+          >.
+        </p>
+      `;
+    } else {
+      statsText = html`
+        <p>
+          There are currently a total of ${this.displayRecords.length} exceptions on record.
+          ${this.displayRecords.filter((e) => !e.topLevelUrlPattern?.length).length}
+          <a href="#global-exceptions" @click=${this.handleAnchorNavigation}>global exceptions</a>
+          and ${this.displayRecords.filter((e) => e.topLevelUrlPattern?.length).length}
+          <a href="#per-site-exceptions" @click=${this.handleAnchorNavigation}
+            >per-site exceptions</a
+          >. ${this.displayRecords.filter((e) => e.category === "baseline").length} of them are
+          baseline exceptions and
+          ${this.displayRecords.filter((e) => e.category === "convenience").length} convenience
+          exceptions.
+        </p>
+        <p>
+          Overall the exceptions resolve ${this.uniqueBugCount} known bugs. Note that global
+          exceptions resolve a lot of untracked site breakage, i.e. breakage we don't have a bug
+          for.
+        </p>
+      `;
+    }
+    return html`${statsText}
       <section style="z-index: 10;">
         <h2 id="global-exceptions" style="z-index: 20;">Global Exceptions</h2>
         <p>
@@ -470,8 +591,7 @@ export class App extends LitElement {
           .entries=${this.displayRecords}
           .bugMeta=${this.bugMeta}
         ></top-exceptions-table>
-      </section>
-    `;
+      </section> `;
   }
 
   render() {
@@ -491,13 +611,28 @@ export class App extends LitElement {
             Learn more
           </a>
         </p>
+        <form class="bug-search" @submit=${this.handleBugIdSearch}>
+          <label for="bug-id-search">Filter by Bug ID</label>
+          <div class="bug-search-controls">
+            <input
+              id="bug-id-search"
+              type="search"
+              placeholder="Search for a Bugzilla ID"
+              .value=${this.filterBugId ?? ""}
+            />
+            <div class="bug-search-actions">
+              <button type="submit">Search</button>
+              <button type="button" @click=${this.handleBugSearchClear}> Clear </button>
+            </div>
+          </div>
+        </form>
         <settings-ui
           .rsEnv=${this.rsEnv}
           .rsEnvUsePreview=${this.rsEnvUsePreview}
           .firefoxVersions=${this.firefoxVersions}
           .filterFirefoxChannel=${this.filterFirefoxChannel}
           @rs-env-change=${this.handleRSEnvChange}
-          @firefox-channel-filter-change=${this.handleFirefoxChannelFilterChange}
+          @filter-change=${this.handleFilterChange}
         ></settings-ui>
 
         ${this.renderMainContent()}
