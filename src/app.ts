@@ -504,7 +504,7 @@ export class App extends LitElement {
         <p>
           Showing ${this.displayRecords.length} exceptions referencing
           <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=${this.filterBugId}">
-            bug ${this.filterBugId} </a
+            bug ${this.filterBugId}</a
           >.
         </p>
       `;
