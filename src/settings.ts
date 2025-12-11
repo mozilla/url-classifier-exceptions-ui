@@ -13,12 +13,14 @@ import { FirefoxChannel } from "./types";
 const QUERY_PARAM_RS_ENV = "rs_env";
 const QUERY_PARAM_RS_USE_PREVIEW = "rs_preview";
 const QUERY_PARAM_FILTER_FIREFOX_CHANNEL = "fx_channel";
+const QUERY_PARAM_FILTER_BUG_ID = "bug_id";
 
 export default {
   getRsEnv,
   setRsEnv,
   getFirefoxChannelFilter,
-  setFirefoxChannelFilter,
+  getBugIdFilter,
+  setFilter,
   getRecordsUrl,
 };
 
@@ -72,12 +74,36 @@ function getFirefoxChannelFilter(): FirefoxChannel {
 }
 
 /**
- * Set the Firefox channel filter in the URL search params.
- * @param filter The Firefox channel filter to set.
+ * Get the Bug id filter from the URL search params.
+ * @returns bug_id to filter for or null
  */
-function setFirefoxChannelFilter(filter: FirefoxChannel | null) {
+function getBugIdFilter(): string | null {
+  const params = new URLSearchParams(window.location.search);
+  const bugId = params.get(QUERY_PARAM_FILTER_BUG_ID);
+  // check for non-digit strings
+  if (bugId !== null && !/^\d+$/.test(bugId)) {
+    return null;
+  }
+  return bugId;
+}
+
+/**
+ * Set the bug id in the URL search params.
+ * @param firefoxChannel The Firefox channel filter to set.
+ * @param bugId The Bug Id that gets filtered
+ */
+function setFilter(firefoxChannel: FirefoxChannel | null, bugId: string | null) {
   const url = new URL(window.location.href);
-  url.searchParams.set(QUERY_PARAM_FILTER_FIREFOX_CHANNEL, filter ?? "");
+  if (firefoxChannel === null) {
+    url.searchParams.delete(QUERY_PARAM_FILTER_FIREFOX_CHANNEL);
+  } else {
+    url.searchParams.set(QUERY_PARAM_FILTER_FIREFOX_CHANNEL, firefoxChannel);
+  }
+  if (bugId === null) {
+    url.searchParams.delete(QUERY_PARAM_FILTER_BUG_ID);
+  } else {
+    url.searchParams.set(QUERY_PARAM_FILTER_BUG_ID, bugId);
+  }
   window.history.pushState({}, "", url);
 }
 
