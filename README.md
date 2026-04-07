@@ -11,12 +11,12 @@ UI displaying URL Classifier Exceptions stored in RemoteSettings.
 
 2. Install dependencies:
    ```bash
-   npm install
+   pnpm install
    ```
 
 3. Start the development server:
    ```bash
-   npm run dev
+   pnpm run dev
    ```
 
 ### Linting
@@ -24,7 +24,7 @@ UI displaying URL Classifier Exceptions stored in RemoteSettings.
 You can auto format code via:
 
 ```bash
-npm run lint[-fix]
+pnpm run lint[-fix]
 ```
 
 ### Updating Exception List Entry Type
@@ -34,7 +34,7 @@ generate the latest TypeScript type definitions based on the schema from Remote
 Settings you can use:
 
 ```bash
-npm run update-types
+pnpm run update-types
 ```
 
 ### Building for Production
@@ -42,7 +42,7 @@ npm run update-types
 To create a production build:
 
 ```bash
-npm run build
+pnpm run build
 ```
 
 The built files will be in the `dist` directory.
