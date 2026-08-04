@@ -17,13 +17,13 @@
   "devDependencies": {
     "dotenv": "^17.4.2",
     "json-schema-to-typescript": "^15.0.4",
-    "prettier": "^3.8.3",
-    "typescript": "~6.0.3",
-    "vite": "^8.0.16"
+    "prettier": "^3.9.6",
+    "typescript": "~7.0.2",
+    "vite": "^8.2.0"
   },
   "dependencies": {
     "addons-moz-compare": "^1.3.0",
-    "dayjs": "^1.11.20",
+    "dayjs": "^1.11.21",
     "lit": "^3.3.3",
     "mozjexl": "^1.1.6"
   }
