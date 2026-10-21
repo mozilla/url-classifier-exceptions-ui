@@ -19,7 +19,7 @@
     "json-schema-to-typescript": "^15.0.4",
     "prettier": "^3.9.6",
     "typescript": "~7.0.2",
-    "vite": "^8.2.0"
+    "vite": "^8.2.4"
   },
   "dependencies": {
     "addons-moz-compare": "^1.3.0",
